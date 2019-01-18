@@ -550,6 +550,8 @@ static int wcnss_probe(struct platform_device *pdev)
 		goto free_rproc;
 	}
 
+	rproc->auto_boot = false;
+
 	ret = rproc_add(rproc);
 	if (ret)
 		goto free_rproc;

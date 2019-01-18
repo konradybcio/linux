@@ -1,19 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2014, Sony Mobile Communications Inc.
- *
- * This driver is for the multi-block Switch-Mode Battery Charger and Boost
- * (SMBB) hardware, found in Qualcomm PM8941 PMICs.  The charger is an
- * integrated, single-cell lithium-ion battery charger.
- *
- * Sub-components:
- *  - Charger core
- *  - Buck
- *  - DC charge-path
- *  - USB charge-path
- *  - Battery interface
- *  - Boost (not implemented)
- *  - Misc
- *  - HF-Buck
+/* SPDX-License-Identifier: GPL-2.0 */
+/* hacked up qcom_smbb.c based off downstream pm8921-charger.c
+ * good enough for battery not to discharge
  */
 
 #include <linux/errno.h>
@@ -28,60 +15,6 @@
 #include <linux/slab.h>
 #include <linux/extcon-provider.h>
 #include <linux/regulator/driver.h>
-
-#if 0
-#define SMBB_CHG_VMAX		0x040
-#define SMBB_CHG_VSAFE		0x041
-#define SMBB_CHG_CFG		0x043
-#define SMBB_CHG_IMAX		0x044
-#define SMBB_CHG_ISAFE		0x045
-#define SMBB_CHG_VIN_MIN	0x047
-#define SMBB_CHG_CTRL		0x049
-#define CTRL_EN			BIT(7)
-#define SMBB_CHG_VBAT_WEAK	0x052
-#define SMBB_CHG_IBAT_TERM_CHG	0x05b
-#define IBAT_TERM_CHG_IEOC	BIT(7)
-#define IBAT_TERM_CHG_IEOC_BMS	BIT(7)
-#define IBAT_TERM_CHG_IEOC_CHG	0
-#define SMBB_CHG_VBAT_DET	0x05d
-#define SMBB_CHG_TCHG_MAX_EN	0x060
-#define TCHG_MAX_EN		BIT(7)
-#define SMBB_CHG_WDOG_TIME	0x062
-#define SMBB_CHG_WDOG_EN	0x065
-#define WDOG_EN			BIT(7)
-
-#define SMBB_BUCK_REG_MODE	0x174
-#define BUCK_REG_MODE		BIT(0)
-#define BUCK_REG_MODE_VBAT	BIT(0)
-#define BUCK_REG_MODE_VSYS	0
-
-#define SMBB_BAT_PRES_STATUS	0x208
-#define PRES_STATUS_BAT_PRES	BIT(7)
-#define SMBB_BAT_TEMP_STATUS	0x209
-#define TEMP_STATUS_OK		BIT(7)
-#define TEMP_STATUS_HOT		BIT(6)
-#define SMBB_BAT_BTC_CTRL	0x249
-#define BTC_CTRL_COMP_EN	BIT(7)
-#define BTC_CTRL_COLD_EXT	BIT(1)
-#define BTC_CTRL_HOT_EXT_N	BIT(0)
-
-#define SMBB_USB_IMAX		0x344
-#define SMBB_USB_OTG_CTL	0x348
-#define OTG_CTL_EN		BIT(0)
-#define SMBB_USB_ENUM_TIMER_STOP 0x34e
-#define ENUM_TIMER_STOP		BIT(0)
-#define SMBB_USB_SEC_ACCESS	0x3d0
-#define SEC_ACCESS_MAGIC	0xa5
-#define SMBB_USB_REV_BST	0x3ed
-#define REV_BST_CHG_GONE	BIT(7)
-
-#define SMBB_DC_IMAX		0x444
-
-#define SMBB_MISC_REV2		0x601
-#define SMBB_MISC_BOOT_DONE	0x642
-#define BOOT_DONE		BIT(7)
-
-#endif
 
 #define STATUS_USBIN_VALID	BIT(0) /* USB connection is valid */
 #define STATUS_DCIN_VALID	BIT(1) /* DC connection is valid */
@@ -162,15 +95,6 @@
 enum smbb_attr {
 	ATTR_BAT_ISAFE,
 	ATTR_BAT_IMAX,
-#if 0
-	ATTR_USBIN_IMAX,
-	ATTR_DCIN_IMAX,
-	ATTR_BAT_VSAFE,
-	ATTR_BAT_VMAX,
-	ATTR_BAT_VMIN,
-	ATTR_CHG_VDET,
-	ATTR_VIN_MIN,
-#endif
 	_ATTR_CNT,
 };
 
@@ -271,59 +195,6 @@ static const struct smbb_charger_attr {
 		.min = 325000,
 		.hw_fn = smbb_bat_imax_fn,
 	},
-#if 0
-	[ATTR_DCIN_IMAX] = {
-		.name = "qcom,dc-current-limit",
-		.reg = SMBB_DC_IMAX,
-		.max = 2500000,
-		.min = 100000,
-		.hw_fn = smbb_imax_fn,
-	},
-	[ATTR_BAT_VSAFE] = {
-		.name = "qcom,fast-charge-safe-voltage",
-		.reg = SMBB_CHG_VSAFE,
-		.max = 5000000,
-		.min = 3240000,
-		.hw_fn = smbb_vmax_fn,
-		.fail_ok = 1,
-	},
-	[ATTR_BAT_VMAX] = {
-		.name = "qcom,fast-charge-high-threshold-voltage",
-		.reg = SMBB_CHG_VMAX,
-		.safe_reg = SMBB_CHG_VSAFE,
-		.max = 5000000,
-		.min = 3240000,
-		.hw_fn = smbb_vmax_fn,
-	},
-	[ATTR_BAT_VMIN] = {
-		.name = "qcom,fast-charge-low-threshold-voltage",
-		.reg = SMBB_CHG_VBAT_WEAK,
-		.max = 3600000,
-		.min = 2100000,
-		.hw_fn = smbb_vbat_weak_fn,
-	},
-	[ATTR_CHG_VDET] = {
-		.name = "qcom,auto-recharge-threshold-voltage",
-		.reg = SMBB_CHG_VBAT_DET,
-		.max = 5000000,
-		.min = 3240000,
-		.hw_fn = smbb_vbat_det_fn,
-	},
-	[ATTR_VIN_MIN] = {
-		.name = "qcom,minimum-input-voltage",
-		.reg = SMBB_CHG_VIN_MIN,
-		.max = 9600000,
-		.min = 4200000,
-		.hw_fn = smbb_vin_fn,
-	},
-	[ATTR_USBIN_IMAX] = {
-		.name = "usb-charge-current-limit",
-		.reg = SMBB_USB_IMAX,
-		.max = 2500000,
-		.min = 100000,
-		.hw_fn = smbb_imax_fn,
-	},
-#endif
 };
 
 static int smbb_charger_attr_write(struct smbb_charger *chg,
@@ -1111,7 +982,7 @@ static int smbb_charger_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id smbb_charger_id_table[] = {
-	{ .compatible = "qcom,pm8941-charger" },
+	{ .compatible = "qcom,pm8921-charger" },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, smbb_charger_id_table);
@@ -1120,11 +991,11 @@ static struct platform_driver smbb_charger_driver = {
 	.probe	  = smbb_charger_probe,
 	.remove	 = smbb_charger_remove,
 	.driver	 = {
-		.name   = "qcom-smbb",
+		.name   = "qcom-pm8921-charger",
 		.of_match_table = smbb_charger_id_table,
 	},
 };
 module_platform_driver(smbb_charger_driver);
 
-MODULE_DESCRIPTION("Qualcomm Switch-Mode Battery Charger and Boost driver");
+MODULE_DESCRIPTION("Qualcomm PMIC8921 Charger");
 MODULE_LICENSE("GPL v2");

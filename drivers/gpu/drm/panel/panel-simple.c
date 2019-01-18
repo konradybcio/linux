@@ -3221,33 +3221,32 @@ static const struct panel_desc_dsi lg_lh500wx1_sd03 = {
 	.lanes = 4,
 };
 
-static const struct drm_display_mode panasonic_vvx10f004b00_mode = {
-	.clock = 157200,
-	.hdisplay = 1920,
-	.hsync_start = 1920 + 154,
-	.hsync_end = 1920 + 154 + 16,
-	.htotal = 1920 + 154 + 16 + 32,
-	.vdisplay = 1200,
-	.vsync_start = 1200 + 17,
-	.vsync_end = 1200 + 17 + 2,
-	.vtotal = 1200 + 17 + 2 + 16,
+static const struct drm_display_mode nicki_panel_mode = {
+	.clock = 400000,
+	.hdisplay = 854,
+	.hsync_start = 854 + 46,
+	.hsync_end = 854 + 46 + 4,
+	.htotal = 854 + 46 + 4 + 44,
+	.vdisplay = 480,
+	.vsync_start = 480 + 15,
+	.vsync_end = 480 + 15 + 1,
+	.vtotal = 480 + 15 + 1 + 16,
 	.vrefresh = 60,
 };
 
-static const struct panel_desc_dsi panasonic_vvx10f004b00 = {
+static const struct panel_desc_dsi nicki_panel = {
 	.desc = {
-		.modes = &panasonic_vvx10f004b00_mode,
+		.modes = &nicki_panel_mode,
 		.num_modes = 1,
 		.bpc = 8,
 		.size = {
-			.width = 217,
-			.height = 136,
+			.width = 50,
+			.height = 89,
 		},
 	},
-	.flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
-		 MIPI_DSI_CLOCK_NON_CONTINUOUS,
+	.flags = 0, //MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_CLOCK_NON_CONTINUOUS
 	.format = MIPI_DSI_FMT_RGB888,
-	.lanes = 4,
+	.lanes = 2,
 };
 
 static const struct drm_display_mode lg_acx467akm_7_mode = {
@@ -3323,8 +3322,8 @@ static const struct of_device_id dsi_of_match[] = {
 		.compatible = "lg,lh500wx1-sd03",
 		.data = &lg_lh500wx1_sd03
 	}, {
-		.compatible = "panasonic,vvx10f004b00",
-		.data = &panasonic_vvx10f004b00
+		.compatible = "nicki,panel",
+		.data = &nicki_panel
 	}, {
 		.compatible = "lg,acx467akm-7",
 		.data = &lg_acx467akm_7

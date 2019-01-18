@@ -167,7 +167,7 @@ static void ci_handle_id_switch(struct ci_hdrc *ci)
 	enum ci_role role = ci_otg_role(ci);
 
 	if (role != ci->role) {
-		dev_dbg(ci->dev, "switching from %s to %s\n",
+		dev_warn(ci->dev, "switching from %s to %s\n",
 			ci_role(ci)->name, ci->roles[role]->name);
 
 		ci_role_stop(ci);
