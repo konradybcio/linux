@@ -3625,7 +3625,7 @@ static int gcc_msm8960_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	const struct of_device_id *match;
-	struct platform_device *tsens;
+	//struct platform_device *tsens;
 	int ret;
 
 	match = of_match_device(gcc_msm8960_match_table, &pdev->dev);
@@ -3649,12 +3649,12 @@ static int gcc_msm8960_probe(struct platform_device *pdev)
 		hfpll_l2.d = &hfpll_l2_8064_data;
 	}
 
-	tsens = platform_device_register_data(&pdev->dev, "qcom-tsens", -1,
+	/*tsens = platform_device_register_data(&pdev->dev, "qcom-tsens", -1,
 					      NULL, 0);
 	if (IS_ERR(tsens))
 		return PTR_ERR(tsens);
 
-	platform_set_drvdata(pdev, tsens);
+	platform_set_drvdata(pdev, tsens);*/
 
 	return 0;
 }
