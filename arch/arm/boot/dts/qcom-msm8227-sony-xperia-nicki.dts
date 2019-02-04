@@ -16,12 +16,6 @@
 
 	choosen { };
 
-	memory {
-		device_type = "memory";
-		/* We expect the bootloader to fill in the reg */
-		reg = <0 0>;
-	};
-
 	soc {
 		usb1: usb@12500000 {
 			compatible = "qcom,ci-hdrc";
