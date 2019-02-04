@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (C) 2019 Pavel Dubrova <pashadubrova@gmail.com>
+ */
+
+ /dts-v1/;
+
+ #include "qcom-msm8960.dtsi"
+
+ / {
+	model = "Sony Xperia M";
+	compatible = "qcom,msm8227";
+
+	aliases { };
+
+	choosen { };
+
+	memory {
+		device_type = "memory";
+		/* We expect the bootloader to fill in the reg */
+		reg = <0 0>;
+	};
+
+	soc { };
+ };
