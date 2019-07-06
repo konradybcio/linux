@@ -15,6 +15,7 @@
 #include <linux/clk-provider.h>
 #include <linux/regmap.h>
 #include <linux/reset-controller.h>
+#include <linux/io.h>
 
 #include <dt-bindings/clock/qcom,mmcc-msm8960.h>
 #include <dt-bindings/reset/qcom,mmcc-msm8960.h>
@@ -25,6 +26,7 @@
 #include "clk-rcg.h"
 #include "clk-branch.h"
 #include "reset.h"
+
 
 enum {
 	P_PXO,
