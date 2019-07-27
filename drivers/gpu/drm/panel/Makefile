@@ -43,6 +43,7 @@ obj-$(CONFIG_DRM_PANEL_SHARP_LS043T1LE01) += panel-sharp-ls043t1le01.o
 obj-$(CONFIG_DRM_PANEL_SITRONIX_ST7701) += panel-sitronix-st7701.o
 obj-$(CONFIG_DRM_PANEL_SITRONIX_ST7789V) += panel-sitronix-st7789v.o
 obj-$(CONFIG_DRM_PANEL_SOMC_JDI_SYN_H455TAX01) += panel-somc-jdi-syn-h455tax01.o
+obj-$(CONFIG_DRM_PANEL_SOMC_JDI_SYN_SUZU) += panel-somc-jdi-syn-suzu.o
 # TODO: WHAT IS THE PANEL MODEL???
 obj-$(CONFIG_DRM_PANEL_SOMC_AUO_FHD_IPS) += panel-somc-auo-fhd-ips.o
 obj-$(CONFIG_DRM_PANEL_SOMC_LGD_FHD_IPS) += panel-somc-lgd-fhd-ips.o
