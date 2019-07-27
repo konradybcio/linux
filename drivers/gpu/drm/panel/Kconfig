@@ -28,6 +28,20 @@ config DRM_PANEL_ASUS_Z00T_TM5P5_NT35596
 	  NT35596 1080x1920 video mode panel as found in some Asus
 	  Zenfone 2 Laser Z00T devices.
 
+config DRM_PANEL_SOMC_JDI_SYN_XXXSUZU
+        tristate "JDI and Synaptics In-Cell XXX command mode panel"
+        depends on OF
+        depends on DRM_MIPI_DSI
+        depends on BACKLIGHT_CLASS_DEVICE
+        help
+          Say Y here if you want to enable support for the XXX
+          JDI Display with In-Cell Synaptics Touch controller, DSI
+          command-mode panel, as found in some Sony Xperia X and
+          Sony Xperia X Performance smartphones.
+          This panel has a 1080x1920 resolution and uses 24 bit RGB
+          per pixel.
+          It provides a single MIPI DSI interface to the host.	
+
 config DRM_PANEL_BOE_HIMAX8279D
 	tristate "Boe Himax8279d panel"
 	depends on OF
