@@ -60,6 +60,17 @@
 		device_type = "memory";
 	};
 
+	bat: battery {
+		compatible = "simple-battery";
+		voltage-min-design-microvolt = <3400000>;
+		voltage-max-design-microvolt = <4350000>;
+		energy-full-design-microwatt-hours = <11618000>; // assuming that this much uWh = 3140 [mAh] * 3,7 [V] * 1000 [mW to uW]
+		charge-full-design-microamp-hours = <3140000>;
+		charge-term-current-microamp = <100000>;
+		constant-charge-current-max-microamp = <1500000>;
+		constant-charge-voltage-max-microvolt = <4200000>;
+	};
+
 	smd {
 		rpm {
 			rpm_requests {
@@ -452,6 +463,8 @@
 			qcom,fast-charge-low-threshold-voltage = <3400000>;
 			qcom,auto-recharge-threshold-voltage = <4200000>;
 			qcom,minimum-input-voltage = <4300000>;
+
+			monitored-battery = <&bat>;
 		};
 
 		gpios@c000 {
