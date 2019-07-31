@@ -450,6 +450,63 @@
 	dma-controller@f9944000 {
 		qcom,controlled-remotely;
 	};
+
+	mdss@fd900000 {
+		status = "ok";
+
+		mdp@fd900000 {
+			status = "ok";
+		};
+
+		dsi@fd922800 {
+			status = "ok";
+
+			vdda-supply = <&pm8941_l2>;
+			vdd-supply = <&pm8941_lvs3>;
+			vddio-supply = <&pm8941_l12>;
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ports {
+				port@1 {
+					endpoint {
+						remote-endpoint = <&panel_in>;
+						data-lanes = <0 1 2 3>;
+					};
+				};
+			};
+
+			panel: panel@0 {
+				reg = <0>;
+				//compatible = "TODO";
+				status = "ok";
+
+                                backlight = <&pm8941_wled>;
+ 				
+				//unsure about regs and GPIOs..
+
+                                vdd-supply = <&pm8941_lvs3>;
+                                vddio-supply = <&pm8941_l12>;
+ 
+                                te-gpio = <&msmgpio 12 0>;
+                                enable-gpios = <&msmgpio 46 1>;
+                                reset-gpios = <&pm8941_gpios 19 0>;
+
+				port {
+					panel_in: endpoint {
+						remote-endpoint = <&dsi0_out>;
+					};
+				};
+			};
+		};
+
+		dsi-phy@fd922a00 {
+			status = "ok";
+
+			vddio-supply = <&pm8941_l12>;
+		};
+	};
 };
 
 &spmi_bus {
