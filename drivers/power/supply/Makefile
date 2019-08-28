@@ -96,6 +96,5 @@ obj-$(CONFIG_CHARGER_BD70528)	+= bd70528-charger.o
 obj-$(CONFIG_CHARGER_BD99954)	+= bd99954-charger.o
 obj-$(CONFIG_CHARGER_WILCO)	+= wilco-charger.o
 
-# TODO: Config, otg doesn't belong here, etc...
+# TODO: Config, doesn't belong here, etc...
 obj-y += qcom_pmi8950_charger.o
-obj-y += qcom_pmi8950_otg.o
