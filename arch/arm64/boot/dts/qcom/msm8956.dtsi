@@ -1817,7 +1817,7 @@
 			clock-names = "core", "core0", "iface", "bus";
 			iommus = <&apps_iommu 21>;
 			memory-region = <&venus_region>;
-			status = "disabled";
+			status = "ok";
 
 			video-decoder {
 				compatible = "venus-decoder";
