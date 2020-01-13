@@ -355,4 +355,12 @@ config DRM_PANEL_TRULY_NT35597_WQXGA
 	help
 	  Say Y here if you want to enable support for Truly NT35597 WQXGA Dual DSI
 	  Video Mode panel
+config DRM_PANEL_JDC_RENESAS
+	tristate "JDC Renesas"
+	depends on OF
+	depends on DRM_MIPI_DSI
+	help
+	  Say Y here if you want to enable support for JDC Renesas 1080x1920 panel
+	  found on some Sony Xperia Z1 devices.
+
 endmenu
