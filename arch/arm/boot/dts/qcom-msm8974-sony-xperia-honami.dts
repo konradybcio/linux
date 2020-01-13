@@ -450,6 +450,15 @@
 		qcom,controlled-remotely;
 	};
 
+	
+	opp_table {
+		status = "ok";
+	};
+
+	adreno@fdb00000 {
+		status = "ok";
+	};
+
 	mdss@fd900000 {
 		status = "ok";
 
@@ -478,7 +487,7 @@
 
 			panel: panel@0 {
 				reg = <0>;
-				//compatible = "TODO";
+				compatible = "jdc,renesas";
 				status = "ok";
 
                                 backlight = <&pm8941_wled>;
