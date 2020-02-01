@@ -280,9 +280,8 @@ static struct freq_tbl ftbl_mmss_axi_clk[] = {
 	F( 75000000, P_GPLL0, 8, 0, 0),
 	F(100000000, P_GPLL0, 6, 0, 0),
 	F(150000000, P_GPLL0, 4, 0, 0),
-	F(291750000, P_MMPLL1, 4, 0, 0),
+	F(282000000, P_MMPLL1, 3, 0, 0),
 	F(400000000, P_MMPLL0, 2, 0, 0),
-	F(466800000, P_MMPLL1, 2.5, 0, 0),
 };
 
 static struct clk_rcg2 mmss_axi_clk_src = {
@@ -305,7 +304,7 @@ static struct freq_tbl ftbl_ocmemnoc_clk[] = {
 	F( 75000000, P_GPLL0, 8, 0, 0),
 	F(100000000, P_GPLL0, 6, 0, 0),
 	F(150000000, P_GPLL0, 4, 0, 0),
-	F(291750000, P_MMPLL1, 4, 0, 0),
+	F(282000000, P_MMPLL1, 3, 0, 0),
 	F(400000000, P_MMPLL0, 2, 0, 0),
 };
 
