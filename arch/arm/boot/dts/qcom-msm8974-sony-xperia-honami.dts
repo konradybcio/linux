@@ -54,11 +54,6 @@
 		};
 	};
 
-	memory@0 {
-		reg = <0 0x40000000>, <0x40000000 0x40000000>;
-		device_type = "memory";
-	};
-
 	bat: battery {
 		compatible = "simple-battery";
 		voltage-min-design-microvolt = <3400000>;
