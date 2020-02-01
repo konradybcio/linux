@@ -484,17 +484,14 @@
 				reg = <0>;
 				compatible = "jdc,renesas";
 				status = "ok";
-
-                                backlight = <&pm8941_wled>;
- 				
 				//unsure about regs and GPIOs..
 
-                                vdd-supply = <&pm8941_lvs3>;
-                                vddio-supply = <&pm8941_l12>;
+                vdd-supply = <&pm8941_lvs3>;
+                vddio-supply = <&pm8941_l12>;
  
-                                te-gpio = <&msmgpio 12 0>;
-                                enable-gpios = <&msmgpio 46 1>;
-                                reset-gpios = <&pm8941_gpios 19 0>;
+                te-gpio = <&msmgpio 12 0>;
+                enable-gpios = <&msmgpio 46 1>;
+                reset-gpios = <&pm8941_gpios 19 0>;
 
 				port {
 					panel_in: endpoint {
