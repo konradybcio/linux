@@ -46,6 +46,8 @@ static const struct msm_dsi_config msm8974_apq8084_dsi_cfg = {
 	.num_dsi = 2,
 };
 
+/* works for all of these: 8916, 8936, 8939 */
+
 static const char * const dsi_8916_bus_clk_names[] = {
 	"mdp_core", "iface", "bus",
 };
