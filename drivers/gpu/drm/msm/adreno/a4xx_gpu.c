@@ -573,7 +573,7 @@ struct msm_gpu *a4xx_gpu_init(struct drm_device *dev)
 		goto fail;
 
 	/* if needed, allocate gmem: */
-	if (adreno_is_a4xx(adreno_gpu)) && !(adreno_is_a405(adreno_gpu)) {
+	if (adreno_is_a4xx(adreno_gpu) && !adreno_is_a405(adreno_gpu)) {
 		ret = adreno_gpu_ocmem_init(dev->dev, adreno_gpu,
 					    &a4xx_gpu->ocmem);
 		if (ret)
