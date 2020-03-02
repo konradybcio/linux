@@ -102,12 +102,16 @@
 			compatible = "arm,cortex-a53";
 			reg = <0x0>;
 			next-level-cache = <&L2_0>;
-			enable-method = "psci";
 			clocks = <&apcs>;
 			operating-points-v2 = <&cpu_opp_table>;
 			#cooling-cells = <2>;
-			power-domains = <&CPU_PD0>;
-			power-domain-names = "psci";
+
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc0>;
+			qcom,saw = <&saw0>;
+
+			/* TODO: power domain support */
+			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
 		CPU1: cpu@1 {
@@ -115,12 +119,14 @@
 			compatible = "arm,cortex-a53";
 			reg = <0x1>;
 			next-level-cache = <&L2_0>;
-			enable-method = "psci";
 			clocks = <&apcs>;
 			operating-points-v2 = <&cpu_opp_table>;
 			#cooling-cells = <2>;
-			power-domains = <&CPU_PD1>;
-			power-domain-names = "psci";
+			
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc1>;
+			qcom,saw = <&saw1>;
+			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
 		CPU2: cpu@2 {
@@ -128,12 +134,14 @@
 			compatible = "arm,cortex-a53";
 			reg = <0x2>;
 			next-level-cache = <&L2_0>;
-			enable-method = "psci";
 			clocks = <&apcs>;
 			operating-points-v2 = <&cpu_opp_table>;
 			#cooling-cells = <2>;
-			power-domains = <&CPU_PD2>;
-			power-domain-names = "psci";
+
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc2>;
+			qcom,saw = <&saw2>;
+			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
 		CPU3: cpu@3 {
@@ -141,24 +149,26 @@
 			compatible = "arm,cortex-a53";
 			reg = <0x3>;
 			next-level-cache = <&L2_0>;
-			enable-method = "psci";
 			clocks = <&apcs>;
 			operating-points-v2 = <&cpu_opp_table>;
 			#cooling-cells = <2>;
-			power-domains = <&CPU_PD3>;
-			power-domain-names = "psci";
+
+			enable-method = "qcom,arm-cortex-acc";
+			qcom,acc = <&acc3>;
+			qcom,saw = <&saw3>;
+			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
 		L2_0: l2-cache {
 		      compatible = "cache";
 		      cache-level = <2>;
+			  power-domain = <&l2ccc_0>;
 		};
 
 		idle-states {
-			entry-method = "psci";
 
 			CPU_SLEEP_0: cpu-sleep-0 {
-				compatible = "arm,idle-state";
+				compatible = "qcom,idle-state-spc";
 				idle-state-name = "standalone-power-collapse";
 				arm,psci-suspend-param = <0x40000002>;
 				entry-latency-us = <130>;
@@ -182,40 +192,6 @@
 				exit-latency-us = <2000>;
 				min-residency-us = <6000>;
 			};
-		};
-	};
-
-	psci {
-		compatible = "arm,psci-1.0";
-		method = "smc";
-
-		CPU_PD0: cpu-pd0 {
-			#power-domain-cells = <0>;
-			power-domains = <&CLUSTER_PD>;
-			domain-idle-states = <&CPU_SLEEP_0>;
-		};
-
-		CPU_PD1: cpu-pd1 {
-			#power-domain-cells = <0>;
-			power-domains = <&CLUSTER_PD>;
-			domain-idle-states = <&CPU_SLEEP_0>;
-		};
-
-		CPU_PD2: cpu-pd2 {
-			#power-domain-cells = <0>;
-			power-domains = <&CLUSTER_PD>;
-			domain-idle-states = <&CPU_SLEEP_0>;
-		};
-
-		CPU_PD3: cpu-pd3 {
-			#power-domain-cells = <0>;
-			power-domains = <&CLUSTER_PD>;
-			domain-idle-states = <&CPU_SLEEP_0>;
-		};
-
-		CLUSTER_PD: cluster-pd {
-			#power-domain-cells = <0>;
-			domain-idle-states = <&CLUSTER_RET>, <&CLUSTER_PWRDN>;
 		};
 	};
 
@@ -1411,6 +1387,45 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 			};
+		};
+
+		l2ccc_0: clock-controller@b011000 {
+			compatible = "qcom,8916-l2ccc";
+			reg = <0x0b011000 0x1000>;
+		};
+
+		acc0: clock-controller@b088000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b088000 0x1000>, <0x0b008000 0x1000>;
+		};
+		acc1: clock-controller@b098000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b098000 0x1000>, <0x0b008000 0x1000>;
+		};
+		acc2: clock-controller@b0a8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b0a8000 0x1000>, <0x0b008000 0x1000>;
+		};
+		acc3: clock-controller@b0b8000 {
+			compatible = "qcom,arm-cortex-acc";
+			reg = <0x0b0b8000 0x1000>, <0x0b008000 0x1000>;
+		};
+
+		saw0: power-controller@b089000 {
+			compatible = "qcom,msm8916-saw2-v3.0-cpu";
+			reg = <0xb089000 0x1000>, <0xb009000 0x1000>;
+		};
+		saw1: power-controller@b099000 {
+			compatible = "qcom,msm8916-saw2-v3.0-cpu";
+			reg = <0xb099000 0x1000>, <0xb009000 0x1000>;
+		};
+		saw2: power-controller@b0a9000 {
+			compatible = "qcom,msm8916-saw2-v3.0-cpu";
+			reg = <0xb0a9000 0x1000>, <0xb009000 0x1000>;
+		};
+		saw3: power-controller@b0b9000 {
+			compatible = "qcom,msm8916-saw2-v3.0-cpu";
+			reg = <0xb0b9000 0x1000>, <0xb009000 0x1000>;
 		};
 	};
 
