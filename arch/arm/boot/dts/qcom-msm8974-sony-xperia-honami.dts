@@ -464,6 +464,14 @@
 		qcom,controlled-remotely;
 	};
 
+	opp_table {
+		status = "ok";
+	};
+
+	adreno@fdb00000 {
+		status = "ok";
+	};
+
 	mdss@fd900000 {
 		status = "ok";
 
