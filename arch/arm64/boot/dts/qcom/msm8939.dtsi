@@ -4,8 +4,8 @@
  */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-// #include <dt-bindings/clock/qcom,gcc-msm8916.h>
-// #include <dt-bindings/reset/qcom,gcc-msm8916.h>
+#include <dt-bindings/clock/qcom,gcc-msm8916.h>
+#include <dt-bindings/reset/qcom,gcc-msm8916.h>
 #include <dt-bindings/clock/qcom,rpmcc.h>
 #include <dt-bindings/thermal/thermal.h>
 
@@ -159,7 +159,7 @@
 			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
-		CPU4: cpu@0 {
+		CPU4: cpu@4 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
 			reg = <0x0 0x0>;
@@ -168,7 +168,7 @@
 			next-level-cache = <&L2_0>;
 		};
 
-		CPU5: cpu@1 {
+		CPU5: cpu@5 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
 			reg = <0x0 0x1>;
@@ -177,7 +177,7 @@
 			next-level-cache = <&L2_0>;
 		};
 
-		CPU6: cpu@2 {
+		CPU6: cpu@6 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
 			reg = <0x0 0x2>;
@@ -186,7 +186,7 @@
 			next-level-cache = <&L2_0>;
 		};
 
-		CPU7: cpu@3 {
+		CPU7: cpu@7 {
 			device_type = "cpu";
 			compatible = "arm,cortex-a53";
 			reg = <0x0 0x3>;
@@ -201,7 +201,7 @@
 			power-domain = <&l2ccc_0>;
 		};
 
-		L2_1: l2-cache {
+		L2_1: l2-cache_1 {
 		    compatible = "cache";
 		    cache-level = <2>;
 			power-domain = <&l2ccc_1>;
@@ -1463,7 +1463,7 @@
 			};
 		};
 
-		l2ccc_0: clock-controller@b011000 {
+		l2ccc_0: clock-controller@b111000 {
 			compatible = "qcom,8916-l2ccc";
 			reg = <0x0b111000 0x1000>;
 		};
@@ -1660,4 +1660,4 @@
 	};
 };
 
-//#include "msm8916-pins.dtsi"
+#include "msm8939-pins.dtsi"
