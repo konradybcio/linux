@@ -500,7 +500,7 @@
 
 			panel: panel@0 {
 				reg = <0>;
-				//compatible = "lg,acx467akm-7";
+				compatible = "honami,renesas";
 
 				pinctrl-names = "default";
 				pinctrl-0 = <&panel_pin>, <&lcd_dcdc_en>, <&lcd_id>;
