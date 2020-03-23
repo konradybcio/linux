@@ -1537,11 +1537,11 @@
 			qcom,smd-edge = <15>;
 
 			rpm_requests {
-				compatible = "qcom,rpm-msm8916";
+				compatible = "qcom,rpm-msm8936";
 				qcom,smd-channels = "rpm_requests";
 
 				rpmcc: qcom,rpmcc {
-					compatible = "qcom,rpmcc-msm8916";
+					compatible = "qcom,rpmcc-msm8936";
 					#clock-cells = <1>;
 				};
 
