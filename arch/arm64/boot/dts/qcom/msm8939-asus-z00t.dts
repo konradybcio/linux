@@ -9,19 +9,21 @@
 
 / {
 	model = "Asus Zenfone 2 Laser (1080p)";
-	compatible = "qcom,msm8939-cdp", "qcom,msm8939", "qcom,cdp";
-    qcom,msm-id = <239 0>, <241 0>, <263 0>;
-    qcom,board-id = <21 0>;
+	compatible = "qcom,msm8939-cdp\0qcom,msm8939\0qcom,cdp";
+    qcom,msm-id = <0xef 0x00 0xf1 0x00 0x107 0x00>;
+    qcom,board-id = <0x15 0x00>;
+
 	aliases {
 		serial0 = &blsp1_uart2;
 	};
 
 	chosen {
 		stdout-path = "serial0";
+		bootargs = "boot_cpus=0, maxcpus=1";
 	};
 
 	reserved-memory {
-		ramoops: ramoops_mem_region@0x8c400000 {
+		ramoops: ramoops_mem_region@8c400000 {
 			compatible = "ramoops";
 			reg = <0 0x8c400000 0 0x00100000>;
 
@@ -36,9 +38,27 @@
 			reg = <0x0 0x83000000 0x0 0x2000000>;
 		};
 
+		asus_debug_region@8fe00000 {
+			linux,reserve-contiguous-region;
+			linux,reserve-region;
+			linux,remove-completely;
+			no-map;
+			reg = <0x00 0x8fe00000 0x00 0x200000>;
+			label = "asus_debug_mem";
+        };
 	};
 
 	soc {
+		qcom,memshare {
+			compatible = "qcom,memshare";
+
+			qcom,client_1 {
+					compatible = "qcom,memshare-peripheral";
+					qcom,peripheral-size = <0x200000>;
+					label = "modem";
+			};
+        };
+
 		sdhci@7824000 {
 			status = "okay";
 
@@ -88,23 +108,23 @@
 			};
 		};
 
-		mdss@1a00000 {
-			dsi@1a98000 {
-				#address-cells = <1>;
-				#size-cells = <0>;
+		// mdss@1a00000 {
+		// 	dsi@1a98000 {
+		// 		#address-cells = <1>;
+		// 		#size-cells = <0>;
 
-				vdda-supply = <&pm8916_l2>;
-				vddio-supply = <&pm8916_l6>;
-			};
+		// 		vdda-supply = <&pm8916_l2>;
+		// 		vddio-supply = <&pm8916_l6>;
+		// 	};
 
-			dsi-phy@1a98300 {
-				vddio-supply = <&pm8916_l6>;
-			};
-		};
+		// 	dsi-phy@1a98300 {
+		// 		vddio-supply = <&pm8916_l6>;
+		// 	};
+		// };
 
-		wcnss@a21b000 {
-			status = "okay";
-		};
+		// wcnss@a21b000 {
+		// 	status = "okay";
+		// };
 
 		/*
 		 * Attempting to enable these devices causes a "synchronous
@@ -138,60 +158,60 @@
 		pinctrl-0 = <&usb_vbus_default>;
 	};
 
-	gpio-keys {
-		compatible = "gpio-keys";
+	// gpio-keys {
+	// 	compatible = "gpio-keys";
 
-		pinctrl-names = "default";
-		pinctrl-0 = <&gpio_keys_default>;
+	// 	pinctrl-names = "default";
+	// 	pinctrl-0 = <&gpio_keys_default>;
 
-		label = "GPIO Buttons";
+	// 	label = "GPIO Buttons";
 
-		volume-up {
-			label = "Volume Up";
-			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
-			linux,code = <KEY_VOLUMEUP>;
-		};
-	};
+	// 	volume-up {
+	// 		label = "Volume Up";
+	// 		gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
+	// 		linux,code = <KEY_VOLUMEUP>;
+	// 	};
+	// };
 };
 
 &msmgpio {
-	pmx_mdss {
-		mdss_default: mdss_default {
-			pinmux {
-				function = "gpio";
-				pins = "gpio25";
-			};
-			pinconf {
-				pins = "gpio25";
-				drive-strength = <8>;
-				bias-disable;
-			};
-		};
+// 	pmx_mdss {
+// 		mdss_default: mdss_default {
+// 			pinmux {
+// 				function = "gpio";
+// 				pins = "gpio25";
+// 			};
+// 			pinconf {
+// 				pins = "gpio25";
+// 				drive-strength = <8>;
+// 				bias-disable;
+// 			};
+// 		};
 
-		mdss_sleep: mdss_sleep {
-			pinmux {
-				function = "gpio";
-				pins = "gpio25";
-			};
-			pinconf {
-				pins = "gpio25";
-				drive-strength = <2>;
-				bias-pull-down;
-			};
-		};
-	};
+// 		mdss_sleep: mdss_sleep {
+// 			pinmux {
+// 				function = "gpio";
+// 				pins = "gpio25";
+// 			};
+// 			pinconf {
+// 				pins = "gpio25";
+// 				drive-strength = <2>;
+// 				bias-pull-down;
+// 			};
+// 		};
+// 	};
 
-	gpio_keys_default: gpio_keys_default {
-		pinmux {
-			function = "gpio";
-			pins = "gpio107";
-		};
-		pinconf {
-			pins = "gpio107";
-			drive-strength = <2>;
-			bias-pull-up;
-		};
-	};
+	// gpio_keys_default: gpio_keys_default {
+	// 	pinmux {
+	// 		function = "gpio";
+	// 		pins = "gpio107";
+	// 	};
+	// 	pinconf {
+	// 		pins = "gpio107";
+	// 		drive-strength = <2>;
+	// 		bias-pull-up;
+	// 	};
+	// };
 
 	usb_vbus_default: usb-vbus-default {
 		pinmux {
@@ -205,18 +225,18 @@
 	};
 };
 
-&spmi_bus {
-	pm8916@0 {
-		pon@800 {
-			volume-down {
-				compatible = "qcom,pm8941-resin";
-				interrupts = <0x0 0x8 1 IRQ_TYPE_EDGE_BOTH>;
-				bias-pull-up;
-				linux,code = <KEY_VOLUMEDOWN>;
-			};
-		};
-	};
-};
+// &spmi_bus {
+// 	pm8916@0 {
+// 		pon@800 {
+// 			volume-down {
+// 				compatible = "qcom,pm8941-resin";
+// 				interrupts = <0x0 0x8 1 IRQ_TYPE_EDGE_BOTH>;
+// 				bias-pull-up;
+// 				linux,code = <KEY_VOLUMEDOWN>;
+// 			};
+// 		};
+// 	};
+// };
 
 &smd_rpm_regulators {
 	vdd_l1_l2_l3-supply = <&pm8916_s3>;
@@ -331,44 +351,44 @@
 	};
 };
 
-&dsi0 {
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&mdss_default>;
-			pinctrl-1 = <&mdss_sleep>;
+// &dsi0 {
+// 			pinctrl-names = "default", "sleep";
+// 			pinctrl-0 = <&mdss_default>;
+// 			pinctrl-1 = <&mdss_sleep>;
 
-			panel@0 {
-				compatible = "changeme,later";
-				reg = <0>;
+// 			panel@0 {
+// 				compatible = "changeme,later";
+// 				reg = <0>;
 
-				//lcd-supply = <&reg_lcd>;
-				//lvds-supply = <&reg_lvds>;
-				//reset-gpios = <&msmgpio 31 GPIO_ACTIVE_HIGH>;
+// 				//lcd-supply = <&reg_lcd>;
+// 				//lvds-supply = <&reg_lvds>;
+// 				//reset-gpios = <&msmgpio 31 GPIO_ACTIVE_HIGH>;
 
-				//clocks = <&gcc GCC_GP3_CLK>;
-				//clock-names = "pwm";
+// 				//clocks = <&gcc GCC_GP3_CLK>;
+// 				//clock-names = "pwm";
 
-				//qcom,platform-reset-gpio = <&msm_gpio 25 0>;
-				//qcom,platform-bklight-en-gpio = <&msm_gpio 21 0>;
+// 				//qcom,platform-reset-gpio = <&msm_gpio 25 0>;
+// 				//qcom,platform-bklight-en-gpio = <&msm_gpio 21 0>;
 
-				ports {
-					#address-cells = <1>;
-					#size-cells = <0>;
+// 				ports {
+// 					#address-cells = <1>;
+// 					#size-cells = <0>;
 
-					port@0 {
-						reg = <0>;
-						panel_in: endpoint {
-							remote-endpoint = <&dsi0_out>;
-						};
-					};
-				};
-			};
+// 					port@0 {
+// 						reg = <0>;
+// 						panel_in: endpoint {
+// 							remote-endpoint = <&dsi0_out>;
+// 						};
+// 					};
+// 				};
+// 			};
 
-			ports {
-				port@1 {
-					endpoint {
-						remote-endpoint = <&panel_in>;
-						data-lanes = <0 1 2 3>;
-					};
-				};
-			};
-		};
+// 			ports {
+// 				port@1 {
+// 					endpoint {
+// 						remote-endpoint = <&panel_in>;
+// 						data-lanes = <0 1 2 3>;
+// 					};
+// 				};
+// 			};
+// 		};
