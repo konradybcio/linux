@@ -19,7 +19,6 @@
 
 	chosen {
 		stdout-path = "serial0";
-		bootargs = "boot_cpus=0, maxcpus=1";
 	};
 
 	reserved-memory {
@@ -158,20 +157,33 @@
 		pinctrl-0 = <&usb_vbus_default>;
 	};
 
-	// gpio-keys {
-	// 	compatible = "gpio-keys";
+	gpio-keys {
+		compatible = "gpio-keys";
+		input-name = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
 
-	// 	pinctrl-names = "default";
-	// 	pinctrl-0 = <&gpio_keys_default>;
+		label = "GPIO Buttons";
 
-	// 	label = "GPIO Buttons";
+		button@0 {
+			label = "Volume Up";
+			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			linux,code = <KEY_VOLUMEUP>;
+			wakeup-source;
+			debounce-interval = <15>;
+		};
 
-	// 	volume-up {
-	// 		label = "Volume Up";
-	// 		gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
-	// 		linux,code = <KEY_VOLUMEUP>;
-	// 	};
-	// };
+		button@1 {
+			label = "Volume Down";
+			gpios = <&msmgpio 117 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			linux,code = <KEY_VOLUMEDOWN>;
+			wakeup-source;
+			debounce-interval = <15>;
+		};
+	};
 };
 
 &msmgpio {
@@ -200,18 +212,6 @@
 // 			};
 // 		};
 // 	};
-
-	// gpio_keys_default: gpio_keys_default {
-	// 	pinmux {
-	// 		function = "gpio";
-	// 		pins = "gpio107";
-	// 	};
-	// 	pinconf {
-	// 		pins = "gpio107";
-	// 		drive-strength = <2>;
-	// 		bias-pull-up;
-	// 	};
-	// };
 
 	usb_vbus_default: usb-vbus-default {
 		pinmux {
@@ -357,7 +357,7 @@
 // 			pinctrl-1 = <&mdss_sleep>;
 
 // 			panel@0 {
-// 				compatible = "changeme,later";
+// 				compatible = "tm5p5,nt35596";
 // 				reg = <0>;
 
 // 				//lcd-supply = <&reg_lcd>;

@@ -4,8 +4,8 @@
  */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/clock/qcom,gcc-msm8916.h>
-#include <dt-bindings/reset/qcom,gcc-msm8916.h>
+#include <dt-bindings/clock/qcom,gcc-msm8936.h>
+#include <dt-bindings/reset/qcom,gcc-msm8936.h>
 #include <dt-bindings/clock/qcom,rpmcc.h>
 #include <dt-bindings/thermal/thermal.h>
 
@@ -43,9 +43,13 @@
 			no-map;
 		};
 
-		//peripheral mem
+		peripheral_region: peripheral_region0x8be00000{
+			reg = <0x00 0x8be00000 0x00 0x600000>;
+			no-map;
+		};
 		
 		venus_mem: venus@89900000 {
+			//0x90000000?
 			reg = <0x0 0x89900000 0x0 0x0500000>;
 			no-map;
 		};
@@ -95,7 +99,7 @@
 	};
 
 	cpus {
-		#address-cells = <1>;
+		#address-cells = <2>;
 		#size-cells = <0>;
 
 		CPU0: cpu@100 {
@@ -104,7 +108,7 @@
 			reg = <0x0 0x100>;
 			next-level-cache = <&L2_1>;
 			clocks = <&apcs>;
-			operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&cpu_opp_table_big>;
 			#cooling-cells = <2>;
 
 			enable-method = "qcom,arm-cortex-acc";
@@ -113,6 +117,11 @@
 
 			/* TODO: power domain support */
 			cpu-idle-states = <&CPU_SLEEP_0>;
+			L2_1: l2-cache_1 {
+				compatible = "cache";
+				cache-level = <2>;
+				power-domain = <&l2ccc_1>;
+			};
 		};
 
 		CPU1: cpu@101 {
@@ -121,7 +130,7 @@
 			reg = <0x0 0x101>;
 			next-level-cache = <&L2_1>;
 			clocks = <&apcs>;
-			operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&cpu_opp_table_big>;
 			#cooling-cells = <2>;
 			
 			enable-method = "qcom,arm-cortex-acc";
@@ -136,7 +145,7 @@
 			reg = <0x0 0x102>;
 			next-level-cache = <&L2_1>;
 			clocks = <&apcs>;
-			operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&cpu_opp_table_big>;
 			#cooling-cells = <2>;
 
 			enable-method = "qcom,arm-cortex-acc";
@@ -151,7 +160,7 @@
 			reg = <0x0 0x103>;
 			next-level-cache = <&L2_1>;
 			clocks = <&apcs>;
-			operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&cpu_opp_table_big>;
 			#cooling-cells = <2>;
 
 			enable-method = "qcom,arm-cortex-acc";
@@ -165,8 +174,15 @@
 			compatible = "arm,cortex-a53";
 			reg = <0x0 0x0>;
 			enable-method = "qcom,arm-cortex-acc";
+			operating-points-v2 = <&cpu_opp_table_little>;
 			qcom,acc = <&acc4>;
+			qcom,saw = <&saw4>;
 			next-level-cache = <&L2_0>;
+			L2_0: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				power-domain = <&l2ccc_0>;
+			};
 		};
 
 		CPU5: cpu@1 {
@@ -174,7 +190,9 @@
 			compatible = "arm,cortex-a53";
 			reg = <0x0 0x1>;
 			enable-method = "qcom,arm-cortex-acc";
+			operating-points-v2 = <&cpu_opp_table_little>;
 			qcom,acc = <&acc5>;
+			qcom,saw = <&saw5>;
 			next-level-cache = <&L2_0>;
 		};
 
@@ -183,7 +201,9 @@
 			compatible = "arm,cortex-a53";
 			reg = <0x0 0x2>;
 			enable-method = "qcom,arm-cortex-acc";
+			operating-points-v2 = <&cpu_opp_table_little>;
 			qcom,acc = <&acc6>;
+			qcom,saw = <&saw6>;
 			next-level-cache = <&L2_0>;
 		};
 
@@ -192,20 +212,10 @@
 			compatible = "arm,cortex-a53";
 			reg = <0x0 0x3>;
 			enable-method = "qcom,arm-cortex-acc";
+			operating-points-v2 = <&cpu_opp_table_little>;
 			qcom,acc = <&acc7>;
+			qcom,saw = <&saw7>;
 			next-level-cache = <&L2_0>;
-		};
-
-		L2_0: l2-cache {
-			compatible = "arm,arch-cache";
-			cache-level = <2>;
-			power-domain = <&l2ccc_0>;
-		};
-
-		L2_1: l2-cache_1 {
-		    compatible = "cache";
-		    cache-level = <2>;
-			power-domain = <&l2ccc_1>;
 		};
 
 		cpu-map {
@@ -241,7 +251,6 @@
 		};
 
 		idle-states {
-
 			CPU_SLEEP_0: cpu-sleep-0 {
 				compatible = "qcom,idle-state-spc";
 				idle-state-name = "standalone-power-collapse";
@@ -277,7 +286,11 @@
 
 	//TODO: thermal-zones
 
-	cpu_opp_table: cpu_opp_table {
+
+	//let's assume the worst and add frequencies
+	//for (what I assume is) the earliest
+	//revision of the soc (v0)
+	cpu_opp_table_big: cpu_opp_table_big {
 		compatible = "operating-points-v2";
 		opp-shared;
 
@@ -295,15 +308,59 @@
 		opp-998400000 {
 			opp-hz = /bits/ 64 <998400000>;
 		};
+		opp-1113600000 {
+			opp-hz = /bits/ 64 <1113600000>;
+		};
+		opp-1344000000 {
+			opp-hz = /bits/ 64 <1344000000>;
+		};
+		opp-1459200000 {
+			opp-hz = /bits/ 64 <1459200000>;
+		};
+		opp-1497600000 {
+			opp-hz = /bits/ 64 <1497600000>;
+		};
+		//for v6
+		opp-1651200000 {
+			opp-hz = /bits/ 64 <1651200000>;
+		};
+	};
+
+	cpu_opp_table_little: cpu_opp_table_little {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp-200000000 {
+			opp-hz = /bits/ 64 <200000000>;
+		};
+		opp-400000000 {
+			opp-hz = /bits/ 64 <400000000>;
+		};
+		opp-800000000 {
+			opp-hz = /bits/ 64 <800000000>;
+		};
+		opp-998400000 {
+			opp-hz = /bits/ 64 <998400000>;
+		};
+		opp-1113600000 {
+			opp-hz = /bits/ 64 <1113600000>;
+		};
 	};
 
 	gpu_opp_table: opp_table {
 		compatible = "operating-points-v2";
 
-        //TODO: add A405 freqs
-
+		opp-550000000 {
+			opp-hz = /bits/ 64 <550000000>;
+		};
+		opp-465000000 {
+			opp-hz = /bits/ 64 <465000000>;
+		};
 		opp-400000000 {
 			opp-hz = /bits/ 64 <400000000>;
+		};
+		opp-220000000 {
+			opp-hz = /bits/ 64 <220000000>;
 		};
 		opp-19200000 {
 			opp-hz = /bits/ 64 <19200000>;
@@ -419,11 +476,21 @@
 			#clock-cells = <0>;
 		};
 
+		//reg = <0x0b111050 0x8>,
+		// 	<0xb011050 0x8>,
+		// 	<0xb1d1050 0x8>,
+		// 	<0x5800c 0x8>,
+		// 	<0x58000 0x8>,
+		// 	<0x58004 0x8>;
+		// reg-names = "apcs-c0-rcg-base", "apcs-c1-rcg-base",
+		// 		"apcs-cci-rcg-base", "efuse", "efuse1",
+		// 		"efuse2";
+
 		apcs: mailbox@b011000 {
 			compatible = "qcom,msm8916-apcs-kpss-global", "syscon";
 			reg = <0xb011000 0x1000>;
 			#mbox-cells = <1>;
-			clocks = <&a53pll>, <&gcc GPLL0_VOTE>;
+			clocks = <&a53pll>, <&gcc GPLL0>;
 			clock-names = "pll", "aux";
 			#clock-cells = <0>;
 		};
@@ -450,106 +517,31 @@
 			status = "disabled";
 		};
 
-		blsp_spi1: spi@78b5000 {
-			compatible = "qcom,spi-qup-v2.2.1";
-			reg = <0x078b5000 0x500>;
-			interrupts = <GIC_SPI 95 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&gcc GCC_BLSP1_QUP1_SPI_APPS_CLK>,
-				 <&gcc GCC_BLSP1_AHB_CLK>;
-			clock-names = "core", "iface";
-			dmas = <&blsp_dma 5>, <&blsp_dma 4>;
-			dma-names = "rx", "tx";
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&spi1_default>;
-			pinctrl-1 = <&spi1_sleep>;
+		i2c_5: i2c@78b9000 { /* BLSP1 QUP5 */
+			compatible = "qcom,i2c-qup-v2.2.1";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			status = "disabled";
-		};
+			reg-names = "qup_phys_addr";
+			reg = <0x78b9000 0x600>;
+			interrupt-names = "qup_irq";
+			interrupts = <0 99 0>;
+			qcom,clk-freq-out = <100000>;
+			qcom,clk-freq-in  = <19200000>;
+			clock-names = "iface_clk", "core_clk";
+			clocks = <&gcc GCC_BLSP1_AHB_CLK>,
+				<&gcc GCC_BLSP1_QUP5_I2C_APPS_CLK>;
 
-		blsp_spi2: spi@78b6000 {
-			compatible = "qcom,spi-qup-v2.2.1";
-			reg = <0x078b6000 0x500>;
-			interrupts = <GIC_SPI 96 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&gcc GCC_BLSP1_QUP2_SPI_APPS_CLK>,
-				 <&gcc GCC_BLSP1_AHB_CLK>;
-			clock-names = "core", "iface";
-			dmas = <&blsp_dma 7>, <&blsp_dma 6>;
-			dma-names = "rx", "tx";
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&spi2_default>;
-			pinctrl-1 = <&spi2_sleep>;
-			#address-cells = <1>;
-			#size-cells = <0>;
-			status = "disabled";
-		};
-
-		blsp_spi3: spi@78b7000 {
-			compatible = "qcom,spi-qup-v2.2.1";
-			reg = <0x078b7000 0x500>;
-			interrupts = <GIC_SPI 97 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&gcc GCC_BLSP1_QUP3_SPI_APPS_CLK>,
-				 <&gcc GCC_BLSP1_AHB_CLK>;
-			clock-names = "core", "iface";
-			dmas = <&blsp_dma 9>, <&blsp_dma 8>;
-			dma-names = "rx", "tx";
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&spi3_default>;
-			pinctrl-1 = <&spi3_sleep>;
-			#address-cells = <1>;
-			#size-cells = <0>;
-			status = "disabled";
-		};
-
-		blsp_spi4: spi@78b8000 {
-			compatible = "qcom,spi-qup-v2.2.1";
-			reg = <0x078b8000 0x500>;
-			interrupts = <GIC_SPI 98 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&gcc GCC_BLSP1_QUP4_SPI_APPS_CLK>,
-				 <&gcc GCC_BLSP1_AHB_CLK>;
-			clock-names = "core", "iface";
-			dmas = <&blsp_dma 11>, <&blsp_dma 10>;
-			dma-names = "rx", "tx";
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&spi4_default>;
-			pinctrl-1 = <&spi4_sleep>;
-			#address-cells = <1>;
-			#size-cells = <0>;
-			status = "disabled";
-		};
-
-		blsp_spi5: spi@78b9000 {
-			compatible = "qcom,spi-qup-v2.2.1";
-			reg = <0x078b9000 0x500>;
-			interrupts = <GIC_SPI 99 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&gcc GCC_BLSP1_QUP5_SPI_APPS_CLK>,
-				 <&gcc GCC_BLSP1_AHB_CLK>;
-			clock-names = "core", "iface";
-			dmas = <&blsp_dma 13>, <&blsp_dma 12>;
-			dma-names = "rx", "tx";
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&spi5_default>;
-			pinctrl-1 = <&spi5_sleep>;
-			#address-cells = <1>;
-			#size-cells = <0>;
-			status = "disabled";
-		};
-
-		blsp_spi6: spi@78ba000 {
-			compatible = "qcom,spi-qup-v2.2.1";
-			reg = <0x078ba000 0x500>;
-			interrupts = <GIC_SPI 100 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&gcc GCC_BLSP1_QUP6_SPI_APPS_CLK>,
-				 <&gcc GCC_BLSP1_AHB_CLK>;
-			clock-names = "core", "iface";
-			dmas = <&blsp_dma 15>, <&blsp_dma 14>;
-			dma-names = "rx", "tx";
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&spi6_default>;
-			pinctrl-1 = <&spi6_sleep>;
-			#address-cells = <1>;
-			#size-cells = <0>;
-			status = "disabled";
+			// pinctrl-names = "i2c_active", "i2c_sleep";
+			// pinctrl-0 = <&i2c_5_active>;
+			// pinctrl-1 = <&i2c_5_sleep>;
+			qcom,noise-rjct-scl = <0>;
+			qcom,noise-rjct-sda = <0>;
+			qcom,bam-pipe-idx-cons = <12>;
+			qcom,bam-pipe-idx-prod = <13>;
+			qcom,master-id = <86>;
+			// dmas = <&dma_blsp1 12 64 0x20000020 0x20>,
+			// 	<&dma_blsp1 13 32 0x20000020 0x20>;
+			// dma-names = "tx", "rx";
 		};
 
 		blsp_i2c2: i2c@78b6000 {
@@ -692,7 +684,7 @@
 					#phy-cells = <0>;
 					clocks = <&xo_board>, <&gcc GCC_USB2A_PHY_SLEEP_CLK>;
 					clock-names = "ref", "sleep";
-					resets = <&gcc GCC_USB2A_PHY_BCR>, <&otg 0>;
+					resets = <&gcc GCC_USB_HS_BCR>, <&otg 0>;
 					reset-names = "phy", "por";
 					qcom,init-seq = /bits/ 8 <0x0 0x44
 						0x1 0x6b 0x2 0x24 0x3 0x13>;
@@ -707,7 +699,7 @@
 			reg = <0x0b000000 0x1000>, <0x0b002000 0x1000>;
 		};
 
-		timer@b020000 {
+		timer@b120000 {
 			#address-cells = <1>;
 			#size-cells = <1>;
 			ranges;
@@ -715,7 +707,7 @@
 			reg = <0xb020000 0x1000>;
 			clock-frequency = <19200000>;
 
-			frame@b021000 {
+			frame@b121000 {
 				frame-number = <0>;
 				interrupts = <GIC_SPI 8 IRQ_TYPE_LEVEL_HIGH>,
 					     <GIC_SPI 7 IRQ_TYPE_LEVEL_HIGH>;
@@ -723,42 +715,42 @@
 				      <0xb022000 0x1000>;
 			};
 
-			frame@b023000 {
+			frame@b123000 {
 				frame-number = <1>;
 				interrupts = <GIC_SPI 9 IRQ_TYPE_LEVEL_HIGH>;
 				reg = <0xb023000 0x1000>;
 				status = "disabled";
 			};
 
-			frame@b024000 {
+			frame@b124000 {
 				frame-number = <2>;
 				interrupts = <GIC_SPI 10 IRQ_TYPE_LEVEL_HIGH>;
 				reg = <0xb024000 0x1000>;
 				status = "disabled";
 			};
 
-			frame@b025000 {
+			frame@b125000 {
 				frame-number = <3>;
 				interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH>;
 				reg = <0xb025000 0x1000>;
 				status = "disabled";
 			};
 
-			frame@b026000 {
+			frame@b126000 {
 				frame-number = <4>;
 				interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>;
 				reg = <0xb026000 0x1000>;
 				status = "disabled";
 			};
 
-			frame@b027000 {
+			frame@b127000 {
 				frame-number = <5>;
 				interrupts = <GIC_SPI 13 IRQ_TYPE_LEVEL_HIGH>;
 				reg = <0xb027000 0x1000>;
 				status = "disabled";
 			};
 
-			frame@b028000 {
+			frame@b128000 {
 				frame-number = <6>;
 				interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
 				reg = <0xb028000 0x1000>;
@@ -1258,6 +1250,7 @@
 			};
 		};
 
+		//probably wrong reg
 		debug@850000 {
 			compatible = "arm,coresight-cpu-debug","arm,primecell";
 			reg = <0x850000 0x1000>;
@@ -1526,6 +1519,22 @@
 		saw3: power-controller@b0b9000 {
 			compatible = "qcom,msm8916-saw2-v3.0-cpu";
 			reg = <0xb0b9000 0x1000>, <0xb009000 0x1000>;
+		};
+		saw4: power-controller@b189000 {
+			compatible = "qcom,msm8916-saw2-v3.0-cpu";
+			reg = <0xb189000 0x1000>, <0xb009000 0x1000>;
+		};
+		saw5: power-controller@b199000 {
+			compatible = "qcom,msm8916-saw2-v3.0-cpu";
+			reg = <0xb199000 0x1000>, <0xb009000 0x1000>;
+		};
+		saw6: power-controller@b1a9000 {
+			compatible = "qcom,msm8916-saw2-v3.0-cpu";
+			reg = <0xb1a9000 0x1000>, <0xb009000 0x1000>;
+		};
+		saw7: power-controller@b1b9000 {
+			compatible = "qcom,msm8916-saw2-v3.0-cpu";
+			reg = <0xb1b9000 0x1000>, <0xb009000 0x1000>;
 		};
 	};
 
