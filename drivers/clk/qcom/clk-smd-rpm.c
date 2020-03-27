@@ -453,6 +453,7 @@ static const struct rpm_smd_clk_desc rpm_clk_msm8916 = {
 };
 
 /* msm8936 */
+DEFINE_CLK_SMD_RPM_BRANCH(msm8936, cxo, cxo_a, QCOM_SMD_RPM_MISC_CLK, 0, 19200000);
 DEFINE_CLK_SMD_RPM(msm8936, pcnoc_clk, pcnoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 0);
 DEFINE_CLK_SMD_RPM(msm8936, snoc_clk, snoc_a_clk, QCOM_SMD_RPM_BUS_CLK, 1);
 DEFINE_CLK_SMD_RPM(msm8936, bimc_clk, bimc_a_clk, QCOM_SMD_RPM_MEM_CLK, 0);
