@@ -9,16 +9,43 @@
 
 / {
 	model = "Asus Zenfone 2 Laser (1080p)";
-	compatible = "qcom,msm8939-cdp\0qcom,msm8939\0qcom,cdp";
+	compatible = "qcom,msm8939-cdp", "qcom,msm8939", "qcom,cdp";
     qcom,msm-id = <0xef 0x00 0xf1 0x00 0x107 0x00>;
-    qcom,board-id = <0x15 0x00>;
+    qcom,board-id = <21 0>;
 
 	aliases {
 		serial0 = &blsp1_uart2;
+		display0 = &framebuffer0;
 	};
 
 	chosen {
-		stdout-path = "serial0";
+		bootargs = "maxcpus=1";
+		stdout-path = "display0";
+
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		framebuffer0: framebuffer@83000000 {
+			status= "okay";
+			compatible = "simple-framebuffer";
+			reg = <0x0 83000000 0x0 (1080 * 1920 * 3)>;
+			width = <1080>;
+			height = <1920>;
+			stride = <(1080 * 3)>;
+			format = "r8g8b8";
+			//power-domains = <&gcc MDSS_GDSC>;
+			clocks = <&gcc GCC_MDSS_AHB_CLK>,
+				 <&gcc GCC_MDSS_VSYNC_CLK>,
+				 <&gcc GCC_MDSS_AXI_CLK>,
+				 <&gcc GCC_MDSS_MDP_CLK>,
+				 /*
+				 <&gcc GCC_MDSS_BYTE0_CLK>,
+				 <&gcc GCC_MDSS_PCLK0_CLK>,
+				 <&gcc GCC_MDSS_ESC0_CLK>,
+				 */
+				 <&xo_board>;
+		};
 	};
 
 	reserved-memory {
@@ -33,8 +60,10 @@
 			status = "ok";
 		};
 
-		cont_splash_mem: splash_region@83000000 {
-			reg = <0x0 0x83000000 0x0 0x2000000>;
+		cont_splash_mem: framebuffer@83000000 {
+			compatible = "removed-dma-pool";
+			reg = <0x0 0x83000000 0x0 (1080 * 1920 * 3)>;
+			no-map;
 		};
 
 		asus_debug_region@8fe00000 {
@@ -48,16 +77,6 @@
 	};
 
 	soc {
-		qcom,memshare {
-			compatible = "qcom,memshare";
-
-			qcom,client_1 {
-					compatible = "qcom,memshare-peripheral";
-					qcom,peripheral-size = <0x200000>;
-					label = "modem";
-			};
-        };
-
 		sdhci@7824000 {
 			status = "okay";
 
@@ -155,6 +174,13 @@
 		vbus-gpio = <&msmgpio 62 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&usb_vbus_default>;
+	};
+
+	dumb {
+		compatible = "minecrell,dumb-mdss-clk";
+		clocks = <&gcc GCC_MDSS_BYTE0_CLK>,
+			 <&gcc GCC_MDSS_PCLK0_CLK>,
+			 <&gcc GCC_MDSS_ESC0_CLK>;
 	};
 
 	gpio-keys {
@@ -286,6 +312,7 @@
 	l6 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
 	};
 
 	l7 {
