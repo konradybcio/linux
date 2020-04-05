@@ -19,14 +19,16 @@
 	};
 
 	chosen {
-		bootargs = "maxcpus=1";
+		bootargs = "maxcpus=1 bootcpus=0 earlycon=simplefb console=simplefb";
 		stdout-path = "display0";
 
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
 
-		framebuffer0: framebuffer@83000000 {
+		//DONT TOUCH WRONG ADDRESS
+		//IT'S INTENTIONAL, OTHERWISE NO BOOT
+		framebuffer0: framebuffer@80000000 {
 			status= "okay";
 			compatible = "simple-framebuffer";
 			reg = <0x0 83000000 0x0 (1080 * 1920 * 3)>;
@@ -60,7 +62,7 @@
 			status = "ok";
 		};
 
-		cont_splash_mem: framebuffer@83000000 {
+		cont_splash_mem: framebuffer@80000000 {
 			compatible = "removed-dma-pool";
 			reg = <0x0 0x83000000 0x0 (1080 * 1920 * 3)>;
 			no-map;
