@@ -28,7 +28,7 @@
 
 		//DONT TOUCH WRONG ADDRESS
 		//IT'S INTENTIONAL, OTHERWISE NO BOOT
-		framebuffer0: framebuffer@80000000 {
+		framebuffer0: framebuffer@83000000 {
 			status= "okay";
 			compatible = "simple-framebuffer";
 			reg = <0x0 83000000 0x0 (1080 * 1920 * 3)>;
@@ -62,7 +62,7 @@
 			status = "ok";
 		};
 
-		cont_splash_mem: framebuffer@80000000 {
+		cont_splash_mem: framebuffer@83000000 {
 			compatible = "removed-dma-pool";
 			reg = <0x0 0x83000000 0x0 (1080 * 1920 * 3)>;
 			no-map;
@@ -91,7 +91,7 @@
 		};
 
 		sdhci@7864000 {
-			status = "okay";
+			status = "disabled";
 
 			vmmc-supply = <&pm8916_l11>;
 			vqmmc-supply = <&pm8916_l12>;
@@ -128,19 +128,20 @@
 			};
 		};
 
-		// mdss@1a00000 {
-		// 	dsi@1a98000 {
-		// 		#address-cells = <1>;
-		// 		#size-cells = <0>;
+		mdss@1a00000 {
+			status = "disabled";
+			dsi@1a98000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
 
-		// 		vdda-supply = <&pm8916_l2>;
-		// 		vddio-supply = <&pm8916_l6>;
-		// 	};
+				vdda-supply = <&pm8916_l2>;
+				vddio-supply = <&pm8916_l6>;
+			};
 
-		// 	dsi-phy@1a98300 {
-		// 		vddio-supply = <&pm8916_l6>;
-		// 	};
-		// };
+			dsi-phy@1a98300 {
+				vddio-supply = <&pm8916_l6>;
+			};
+		};
 
 		// wcnss@a21b000 {
 		// 	status = "okay";
@@ -215,31 +216,31 @@
 };
 
 &msmgpio {
-// 	pmx_mdss {
-// 		mdss_default: mdss_default {
-// 			pinmux {
-// 				function = "gpio";
-// 				pins = "gpio25";
-// 			};
-// 			pinconf {
-// 				pins = "gpio25";
-// 				drive-strength = <8>;
-// 				bias-disable;
-// 			};
-// 		};
+	pmx_mdss {
+		mdss_default: mdss_default {
+			pinmux {
+				function = "gpio";
+				pins = "gpio25";
+			};
+			pinconf {
+				pins = "gpio25";
+				drive-strength = <8>;
+				bias-disable;
+			};
+		};
 
-// 		mdss_sleep: mdss_sleep {
-// 			pinmux {
-// 				function = "gpio";
-// 				pins = "gpio25";
-// 			};
-// 			pinconf {
-// 				pins = "gpio25";
-// 				drive-strength = <2>;
-// 				bias-pull-down;
-// 			};
-// 		};
-// 	};
+		mdss_sleep: mdss_sleep {
+			pinmux {
+				function = "gpio";
+				pins = "gpio25";
+			};
+			pinconf {
+				pins = "gpio25";
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+		};
+	};
 
 	usb_vbus_default: usb-vbus-default {
 		pinmux {
@@ -380,44 +381,44 @@
 	};
 };
 
-// &dsi0 {
-// 			pinctrl-names = "default", "sleep";
-// 			pinctrl-0 = <&mdss_default>;
-// 			pinctrl-1 = <&mdss_sleep>;
+&dsi0 {
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&mdss_default>;
+			pinctrl-1 = <&mdss_sleep>;
 
-// 			panel@0 {
-// 				compatible = "tm5p5,nt35596";
-// 				reg = <0>;
+			panel@0 {
+				compatible = "tm5p5,nt35596";
+				reg = <0>;
 
-// 				//lcd-supply = <&reg_lcd>;
-// 				//lvds-supply = <&reg_lvds>;
-// 				//reset-gpios = <&msmgpio 31 GPIO_ACTIVE_HIGH>;
+				//lcd-supply = <&reg_lcd>;
+				//lvds-supply = <&reg_lvds>;
+				//reset-gpios = <&msmgpio 31 GPIO_ACTIVE_HIGH>;
 
-// 				//clocks = <&gcc GCC_GP3_CLK>;
-// 				//clock-names = "pwm";
+				//clocks = <&gcc GCC_GP3_CLK>;
+				//clock-names = "pwm";
 
-// 				//qcom,platform-reset-gpio = <&msm_gpio 25 0>;
-// 				//qcom,platform-bklight-en-gpio = <&msm_gpio 21 0>;
+				//qcom,platform-reset-gpio = <&msm_gpio 25 0>;
+				//qcom,platform-bklight-en-gpio = <&msm_gpio 21 0>;
 
-// 				ports {
-// 					#address-cells = <1>;
-// 					#size-cells = <0>;
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
 
-// 					port@0 {
-// 						reg = <0>;
-// 						panel_in: endpoint {
-// 							remote-endpoint = <&dsi0_out>;
-// 						};
-// 					};
-// 				};
-// 			};
+					port@0 {
+						reg = <0>;
+						panel_in: endpoint {
+							remote-endpoint = <&dsi0_out>;
+						};
+					};
+				};
+			};
 
-// 			ports {
-// 				port@1 {
-// 					endpoint {
-// 						remote-endpoint = <&panel_in>;
-// 						data-lanes = <0 1 2 3>;
-// 					};
-// 				};
-// 			};
-// 		};
+			ports {
+				port@1 {
+					endpoint {
+						remote-endpoint = <&panel_in>;
+						data-lanes = <0 1 2 3>;
+					};
+				};
+			};
+		};
