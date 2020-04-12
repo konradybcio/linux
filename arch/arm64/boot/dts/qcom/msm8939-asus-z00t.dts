@@ -14,7 +14,7 @@
     qcom,board-id = <21 0>;
 
 	aliases {
-		serial0 = &blsp1_uart2;
+		//serial0 = &blsp1_uart2;
 		display0 = &framebuffer0;
 	};
 
@@ -103,12 +103,12 @@
 			non-removable;
 		};
 
-		serial@78b0000 {
-			status = "okay";
-			pinctrl-names = "default", "sleep";
-			pinctrl-0 = <&blsp1_uart2_default>;
-			pinctrl-1 = <&blsp1_uart2_sleep>;
-		};
+		// serial@78b0000 {
+		// 	status = "okay";
+		// 	pinctrl-names = "default", "sleep";
+		// 	pinctrl-0 = <&blsp1_uart2_default>;
+		// 	pinctrl-1 = <&blsp1_uart2_sleep>;
+		// };
 
 		usb@78d9000 {
 			status = "okay";
@@ -310,6 +310,7 @@
 	l5 {
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
 	};
 
 	l6 {
