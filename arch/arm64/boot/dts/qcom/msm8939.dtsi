@@ -667,7 +667,7 @@
         //         };
 
 		sdhc_1: sdhci@7824000 {
-			compatible = "qcom,msm8939-sdhci", "qcom,sdhci-msm-v4";
+			compatible = "qcom,sdhci-msm-v4";
 			reg = <0x07824900 0x11c>, <0x07824000 0x800>;
 			reg-names = "hc_mem", "core_mem";
 
@@ -677,14 +677,17 @@
 				 <&gcc GCC_SDCC1_AHB_CLK>,
 				 <&xo_board>;
 			clock-names = "core", "iface", "xo";
-			mmc-ddr-1_8v;
+			//mmc-ddr-1_8v;
+			mmc-hs200-1_8v;
+			mmc-hs200-1_2v;
+			no-1-8-v;
 			bus-width = <8>;
 			non-removable;
 			status = "disabled";
 		};
 
 		sdhc_2: sdhci@7864000 {
-			compatible = "qcom,msm8939-sdhci", "qcom,sdhci-msm-v4";
+			compatible = "qcom,sdhci-msm-v4";
 			reg = <0x07864900 0x11c>, <0x07864000 0x800>;
 			reg-names = "hc_mem", "core_mem";
 

@@ -29,7 +29,7 @@
 		//DONT TOUCH WRONG ADDRESS
 		//IT'S INTENTIONAL, OTHERWISE NO BOOT
 		framebuffer0: framebuffer@83000000 {
-			status= "okay";
+			status= "ok";
 			compatible = "simple-framebuffer";
 			reg = <0x0 83000000 0x0 (1080 * 1920 * 3)>;
 			width = <1080>;
@@ -64,7 +64,7 @@
 
 		cont_splash_mem: framebuffer@83000000 {
 			compatible = "removed-dma-pool";
-			reg = <0x0 0x83000000 0x0 (1080 * 1920 * 3)>;
+			reg = <0x0 0x83000000 0x0 0x2000000>; //(1080 * 1920 * 3)>;
 			no-map;
 		};
 
@@ -99,8 +99,6 @@
 			pinctrl-names = "default", "sleep";
 			pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on>;
 			pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off>;
-
-			non-removable;
 		};
 
 		// serial@78b0000 {
