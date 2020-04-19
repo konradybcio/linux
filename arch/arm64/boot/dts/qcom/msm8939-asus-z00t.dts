@@ -36,16 +36,14 @@
 			height = <1920>;
 			stride = <(1080 * 3)>;
 			format = "r8g8b8";
-			//power-domains = <&gcc MDSS_GDSC>;
+			power-domains = <&gcc MDSS_GDSC>;
 			clocks = <&gcc GCC_MDSS_AHB_CLK>,
 				 <&gcc GCC_MDSS_VSYNC_CLK>,
 				 <&gcc GCC_MDSS_AXI_CLK>,
 				 <&gcc GCC_MDSS_MDP_CLK>,
-				 /*
 				 <&gcc GCC_MDSS_BYTE0_CLK>,
 				 <&gcc GCC_MDSS_PCLK0_CLK>,
 				 <&gcc GCC_MDSS_ESC0_CLK>,
-				 */
 				 <&xo_board>;
 		};
 	};
@@ -100,13 +98,6 @@
 			pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on>;
 			pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off>;
 		};
-
-		// serial@78b0000 {
-		// 	status = "okay";
-		// 	pinctrl-names = "default", "sleep";
-		// 	pinctrl-0 = <&blsp1_uart2_default>;
-		// 	pinctrl-1 = <&blsp1_uart2_sleep>;
-		// };
 
 		usb@78d9000 {
 			status = "okay";
@@ -175,13 +166,6 @@
 		vbus-gpio = <&msmgpio 62 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&usb_vbus_default>;
-	};
-
-	dumb {
-		compatible = "minecrell,dumb-mdss-clk";
-		clocks = <&gcc GCC_MDSS_BYTE0_CLK>,
-			 <&gcc GCC_MDSS_PCLK0_CLK>,
-			 <&gcc GCC_MDSS_ESC0_CLK>;
 	};
 
 	gpio-keys {

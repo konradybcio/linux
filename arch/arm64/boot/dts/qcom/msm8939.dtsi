@@ -4,8 +4,8 @@
  */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/clock/qcom,gcc-msm8936.h>
-#include <dt-bindings/reset/qcom,gcc-msm8936.h>
+#include <dt-bindings/clock/qcom,gcc-msm8939.h>
+#include <dt-bindings/reset/qcom,gcc-msm8939.h>
 #include <dt-bindings/clock/qcom,rpmcc.h>
 #include <dt-bindings/thermal/thermal.h>
 
@@ -427,7 +427,7 @@
 		};
 
 		gcc: clock-controller@1800000 {
-			compatible = "qcom,gcc-msm8936";
+			compatible = "qcom,gcc-msm8939";
 			#clock-cells = <1>;
 			#reset-cells = <1>;
 			#power-domain-cells = <1>;
@@ -677,10 +677,8 @@
 				 <&gcc GCC_SDCC1_AHB_CLK>,
 				 <&xo_board>;
 			clock-names = "core", "iface", "xo";
-			//mmc-ddr-1_8v;
 			mmc-hs200-1_8v;
 			mmc-hs200-1_2v;
-			no-1-8-v;
 			bus-width = <8>;
 			non-removable;
 			status = "disabled";
