@@ -19,7 +19,7 @@
 	};
 
 	chosen {
-		bootargs = "maxcpus=1 bootcpus=0 earlycon=simplefb console=simplefb";
+		bootargs = "earlycon=tty1 console=tty1";
 		stdout-path = "display0";
 
 		#address-cells = <2>;
@@ -29,7 +29,7 @@
 		//DONT TOUCH WRONG ADDRESS
 		//IT'S INTENTIONAL, OTHERWISE NO BOOT
 		framebuffer0: framebuffer@83000000 {
-			status= "ok";
+			status= "disabled";
 			compatible = "simple-framebuffer";
 			reg = <0x0 83000000 0x0 (1080 * 1920 * 3)>;
 			width = <1080>;
@@ -118,7 +118,7 @@
 		};
 
 		mdss@1a00000 {
-			status = "disabled";
+			status = "ok";
 			dsi@1a98000 {
 				#address-cells = <1>;
 				#size-cells = <0>;
@@ -129,6 +129,7 @@
 
 			dsi-phy@1a98300 {
 				vddio-supply = <&pm8916_l6>;
+				qcom,dsi-phy-regulator-ldo-mode;
 			};
 		};
 
@@ -198,6 +199,18 @@
 };
 
 &msmgpio {
+	lcd_en_default: lcd_en_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio21";
+		};
+		pinconf {
+			pins = "gpio21";
+			drive-strength = <6>;
+			bias-pull-up;
+		};
+	};
+
 	pmx_mdss {
 		mdss_default: mdss_default {
 			pinmux {
@@ -370,12 +383,15 @@
 			pinctrl-1 = <&mdss_sleep>;
 
 			panel@0 {
-				compatible = "tm5p5,nt35596";
+				compatible = "mdss,tm5p5-nt35596";
 				reg = <0>;
 
 				//lcd-supply = <&reg_lcd>;
 				//lvds-supply = <&reg_lvds>;
-				//reset-gpios = <&msmgpio 31 GPIO_ACTIVE_HIGH>;
+				reset-gpios = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
+				vdd-supply = <&pm8916_l8>;
+				vddio-supply = <&pm8916_l6>;
+
 
 				//clocks = <&gcc GCC_GP3_CLK>;
 				//clock-names = "pwm";
