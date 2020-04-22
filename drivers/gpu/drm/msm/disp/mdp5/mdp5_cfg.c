@@ -351,8 +351,8 @@ static const struct mdp5_cfg_hw msm8936_config = {
 		.caps = MDP_CAP_SMP |
 			0,
 	},
-	.smp = {
-		.mmb_count = 8,
+	.smp = { //this block is good
+		.mmb_count = 8, 
 		.mmb_size = 10240,
 		.clients = {
 			[SSPP_VIG0] = 1, [SSPP_DMA0] = 4,
@@ -360,54 +360,58 @@ static const struct mdp5_cfg_hw msm8936_config = {
 		},
 	},
 	.ctl = {
-		.count = 5,
-		.base = { 0x01000, 0x01200, 0x01400, 0x01600, 0x01800 },
+		.count = 3, //?
+		.base = { 0x01000, 0x01200, 0x01400 }, //?
 		.flush_hw_mask = 0x4003ffff,
 	},
 	.pipe_vig = {
-		.count = 1,
-		.base = { 0x04000 },
+		.count = 1, //good
+		.base = { 0x04000 }, //good
 		.caps = MDP_PIPE_CAP_HFLIP | MDP_PIPE_CAP_VFLIP |
 				MDP_PIPE_CAP_SCALE | MDP_PIPE_CAP_CSC |
 				MDP_PIPE_CAP_DECIMATION,
 	},
 	.pipe_rgb = {
-		.count = 2,
-		.base = { 0x14000, 0x16000 },
+		.count = 2, //good
+		.base = { 0x14000, 0x16000 }, //good
 		.caps = MDP_PIPE_CAP_HFLIP | MDP_PIPE_CAP_VFLIP |
 				MDP_PIPE_CAP_DECIMATION,
 	},
 	.pipe_dma = {
-		.count = 1,
-		.base = { 0x24000 },
+		.count = 1, //good
+		.base = { 0x24000 }, //good
 		.caps = MDP_PIPE_CAP_HFLIP | MDP_PIPE_CAP_VFLIP,
 	},
 	.lm = {
-		.count = 2, /* LM0 and LM3 */
-		.base = { 0x44000, 0x47000 },
+		.count = 1, //what???
+		.base = { 0x44000 }, //good?
 		.instances = {
 				{ .id = 0, .pp = 0, .dspp = 0,
 				  .caps = MDP_LM_CAP_DISPLAY, },
-				{ .id = 3, .pp = -1, .dspp = -1,
-				  .caps = MDP_LM_CAP_WB },
-			     },
+				},
 		.nb_stages = 8,
 		.max_width = 2048,
 		.max_height = 0xFFFF,
 	},
+	.pp = { //?
+		.count = 1, //?
+		.base = { 0x70000 }, //?
+	}, //?
+
 	.dspp = {
-		.count = 1,
-		.base = { 0x54000 },
+		.count = 1, //good
+		.base = { 0x54000 }, //good
 
 	},
 	.intf = {
-		.base = { 0x00000, 0x6a800, 0x6b000 },
+		.base = { 0x00000, 0x6a800, 0x6b000 }, //good
 		.connect = {
 			[0] = INTF_DISABLED,
 			[1] = INTF_DSI,
+			[2] = INTF_DSI, //good?
 		},
 	},
-	.max_clk = 366670000,
+	.max_clk = 366670000, //good.
 };
 static const struct mdp5_cfg_hw msm8x94_config = {
 	.name = "msm8x94",
