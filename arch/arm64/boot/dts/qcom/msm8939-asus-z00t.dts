@@ -19,7 +19,7 @@
 	};
 
 	chosen {
-		bootargs = "earlycon=tty1 console=tty1";
+		bootargs = "earlycon=tty1 console=tty1 PMOS_NO_OUTPUT_REDIRECT";
 		stdout-path = "display0";
 
 		#address-cells = <2>;
@@ -88,6 +88,7 @@
 			pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off>;
 		};
 
+		//somehow it broke touchscreen????
 		sdhci@7864000 {
 			status = "disabled";
 
@@ -101,8 +102,7 @@
 
 		usb@78d9000 {
 			status = "okay";
-			dr_mode = "peripheral";
-			extcon = <&usb_vbus>;
+			extcon = <&usb_id>, <&usb_id>;
 
 			hnp-disable;
 			srp-disable;
@@ -110,12 +110,13 @@
 
 			ulpi {
 				phy {
-					extcon = <&usb_vbus>;
+					extcon = <&usb_id>;
 					v1p8-supply = <&pm8916_l7>;
 					v3p3-supply = <&pm8916_l13>;
 				};
 			};
 		};
+
 
 		mdss@1a00000 {
 			status = "ok";
@@ -153,9 +154,9 @@
 			};
 		};
 
-		// wcnss@a21b000 {
-		// 	status = "okay";
-		// };
+		wcnss@a21b000 {
+			status = "okay";
+		};
 
 		/*
 		 * Attempting to enable these devices causes a "synchronous
@@ -182,11 +183,11 @@
 	};
 
 	// FIXME: Use extcon device provided by charger driver when available
-	usb_vbus: usb-vbus {
+	usb_id: usb-id {
 		compatible = "linux,extcon-usb-gpio";
-		vbus-gpio = <&msmgpio 62 GPIO_ACTIVE_HIGH>;
+		id-gpio = <&msmgpio 110 GPIO_ACTIVE_HIGH>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&usb_vbus_default>;
+		pinctrl-0 = <&usb_id_default>;
 	};
 
 	gpio-keys {
@@ -295,6 +296,18 @@
 		pinconf {
 			pins = "gpio21";
 			drive-strength = <6>;
+			bias-pull-up;
+		};
+	};
+
+	usb_id_default: usb_id_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio110";
+		};
+		pinconf {
+			pins = "gpio110";
+			drive-strength = <8>;
 			bias-pull-up;
 		};
 	};
@@ -474,18 +487,9 @@
 				compatible = "mdss,tm5p5-nt35596";
 				reg = <0>;
 
-				//lcd-supply = <&reg_lcd>;
-				//lvds-supply = <&reg_lvds>;
 				reset-gpios = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
 				vdd-supply = <&pm8916_l8>;
 				vddio-supply = <&pm8916_l6>;
-
-
-				//clocks = <&gcc GCC_GP3_CLK>;
-				//clock-names = "pwm";
-
-				//qcom,platform-reset-gpio = <&msm_gpio 25 0>;
-				//qcom,platform-bklight-en-gpio = <&msm_gpio 21 0>;
 
 				ports {
 					#address-cells = <1>;
