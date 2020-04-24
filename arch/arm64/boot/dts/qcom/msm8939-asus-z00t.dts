@@ -14,38 +14,12 @@
     qcom,board-id = <21 0>;
 
 	aliases {
-		//serial0 = &blsp1_uart2;
-		display0 = &framebuffer0;
+		serial0 = &blsp1_uart2;
 	};
 
 	chosen {
-		bootargs = "earlycon=tty1 console=tty1 PMOS_NO_OUTPUT_REDIRECT";
-		stdout-path = "display0";
-
-		#address-cells = <2>;
-		#size-cells = <2>;
-		ranges;
-
-		//DONT TOUCH WRONG ADDRESS
-		//IT'S INTENTIONAL, OTHERWISE NO BOOT
-		framebuffer0: framebuffer@83000000 {
-			status= "disabled";
-			compatible = "simple-framebuffer";
-			reg = <0x0 83000000 0x0 (1080 * 1920 * 3)>;
-			width = <1080>;
-			height = <1920>;
-			stride = <(1080 * 3)>;
-			format = "r8g8b8";
-			power-domains = <&gcc MDSS_GDSC>;
-			clocks = <&gcc GCC_MDSS_AHB_CLK>,
-				 <&gcc GCC_MDSS_VSYNC_CLK>,
-				 <&gcc GCC_MDSS_AXI_CLK>,
-				 <&gcc GCC_MDSS_MDP_CLK>,
-				 <&gcc GCC_MDSS_BYTE0_CLK>,
-				 <&gcc GCC_MDSS_PCLK0_CLK>,
-				 <&gcc GCC_MDSS_ESC0_CLK>,
-				 <&xo_board>;
-		};
+		bootargs = "bootcpus=0,4,5,6,7 earlycon=tty1 console=tty1 PMOS_NO_OUTPUT_REDIRECT";
+		stdout-path = "tty1";
 	};
 
 	reserved-memory {
@@ -117,7 +91,6 @@
 			};
 		};
 
-
 		mdss@1a00000 {
 			status = "ok";
 			dsi@1a98000 {
@@ -131,6 +104,28 @@
 			dsi-phy@1a98300 {
 				vddio-supply = <&pm8916_l6>;
 				qcom,dsi-phy-regulator-ldo-mode;
+			};
+		};
+
+		i2c@78b6000 {
+			mpu6515@68 {
+				compatible = "invensense,mpu6515";
+				reg = <0x68>;
+				interrupts-extended = <&msmgpio 36 2>;
+				vddio-supply = <&pm8916_l6>;
+				vdd-supply = <&pm8916_l8>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&mpu6515_default>, <&mpu6515_sleep>;
+			};
+			ak09911@c {
+				compatible = "asahi-kasei,ak09911";
+				reg = <0x0c>;
+				vdd-supply = <&pm8916_l8>;
+				vid-supply = <&pm8916_l6>;
+				gpios = <&msmgpio 0x70 0>;
+
+				//currently slows down boot significantly, phixit
+				status = "disabled";
 			};
 		};
 
@@ -151,6 +146,20 @@
 				touchscreen-size-y = <1920>;
 
 				wakeup-source;
+			};
+		};
+
+		i2c@78b8000 {
+			reg_arm_dram: regulator@60 {
+				compatible = "fcs,fan53555";
+				pinctrl-names = "default";
+				pinctrl-0 = <&ext_buck_vsel>;
+				reg = <0x60>;
+				regulator-min-microvolt =  <1050000>;
+				regulator-max-microvolt = <1350000>;
+				regulator-ramp-delay = <1250>;
+				regulator-always-on;
+				vsel-gpios = <&msmgpio 111 1>;
 			};
 		};
 
@@ -348,20 +357,44 @@
 			bias-pull-up;
 		};
 	};
-};
 
-// &spmi_bus {
-// 	pm8916@0 {
-// 		pon@800 {
-// 			volume-down {
-// 				compatible = "qcom,pm8941-resin";
-// 				interrupts = <0x0 0x8 1 IRQ_TYPE_EDGE_BOTH>;
-// 				bias-pull-up;
-// 				linux,code = <KEY_VOLUMEDOWN>;
-// 			};
-// 		};
-// 	};
-// };
+	ext_buck_vsel: ext_buck_vsel {
+		pinmux {
+			function = "gpio";
+			pins = "gpio111";
+		};
+		pinconf{
+			pins = "gpio111";
+			drive-strength = <2>;
+		};
+	};
+
+	mpu6515_int_pin {
+		mpu6515_default: mpu6515_default {
+			pinmux {
+				function = "gpio";
+				pins = "gpio36";
+			};
+			pinconf {
+				pins = "gpio36";
+				bias-pull-up;
+				drive-strength = <6>;
+			};
+		};
+
+		mpu6515_sleep: mpu6515_sleep {
+			pinmux {
+				function = "gpio";
+				pins = "gpio36";
+			};
+			pinconf {
+				pins = "gpio36";
+				drive-strength = <2>;
+			};
+		};
+	};
+
+};
 
 &smd_rpm_regulators {
 	vdd_l1_l2_l3-supply = <&pm8916_s3>;
