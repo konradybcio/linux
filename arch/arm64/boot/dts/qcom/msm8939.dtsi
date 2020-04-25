@@ -801,20 +801,19 @@
 		};
 
 		//breaks display
-		//8939 has one reg more:  0x5c000 0x1000
 		//debugfs: Directory '4a9000.thermal-sensor' with parent 'tsens' already present!
 
-		// tsens: thermal-sensor@4a9000 {
-		// 	compatible = "qcom,msm8916-tsens";
-		// 	reg = <0x4a9000 0x1000>, /* TM */
-		// 	      <0x4a8000 0x1000>; /* SROT */
-		// 	nvmem-cells = <&tsens_caldata>, <&tsens_calsel>;
-		// 	nvmem-cell-names = "calib", "calib_sel";
-		// 	#qcom,sensors = <9>;
-		// 	interrupts = <GIC_SPI 184 IRQ_TYPE_LEVEL_HIGH>;
-		// 	interrupt-names = "uplow";
-		// 	#thermal-sensor-cells = <1>;
-		// };
+		tsens: thermal-sensor@4a9000 {
+			compatible = "qcom,msm8939-tsens";
+			reg = <0x4a9000 0x1000>, /* TM */
+			      <0x4a8000 0x1000>; /* SROT */
+			nvmem-cells = <&tsens_caldata>, <&tsens_calsel>;
+			nvmem-cell-names = "calib", "calib_sel";
+			#qcom,sensors = <10>;
+			interrupts = <GIC_SPI 184 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "uplow";
+			#thermal-sensor-cells = <1>;
+		};
 
 
         //regs might be off by some ( https://github.com/mg712702/android_kernel_asus_msm8916/blob/minimal/arch/arm/boot/dts/qcom/msm8939-iommu.dtsi )
@@ -1102,7 +1101,7 @@
 				interrupts = <0 25 IRQ_TYPE_EDGE_RISING>;
 
 				qcom,smd-edge = <0>;
-				qcom,ipc = <&apcs0 8 12>;
+				qcom,ipc = <&apcs 8 12>;
 				qcom,remote-pid = <1>;
 
 				label = "hexagon";
@@ -1135,7 +1134,7 @@
 			status = "disabled";
 
 			iris {
-				compatible = "qcom,wcn3680";
+				compatible = "qcom,wcn3620";
 
 				clocks = <&rpmcc RPM_SMD_RF_CLK2>;
 				clock-names = "xo";
@@ -1149,7 +1148,7 @@
 			smd-edge {
 				interrupts = <0 142 1>;
 
-				qcom,ipc = <&apcs0 8 17>;
+				qcom,ipc = <&apcs 8 17>;
 				qcom,smd-edge = <6>;
 				qcom,remote-pid = <4>;
 
@@ -1460,7 +1459,7 @@
 		};
 
 		venus: video-codec@1d00000 {
-			compatible = "qcom,msm8916-venus";
+			compatible = "qcom,msm8939-venus";
 			reg = <0x01d00000 0xff000>;
 			interrupts = <GIC_SPI 44 IRQ_TYPE_LEVEL_HIGH>;
 			power-domains = <&gcc VENUS_GDSC>;
@@ -1561,17 +1560,26 @@
 			};
 		};
 
-		//l2ccc for big
-		apcs1: clock-controller@b111000 {
-			compatible = "syscon";
-			reg = <0x0b111000 0x1000>;
-		};
+		// //l2ccc for big
+		// apcs1: clock-controller@b111000 {
+		// 	compatible = "syscon";
+		// 	reg = <0x0b111000 0x1000>;
+		// };
 
-		//l2ccc for little
-		apcs0: clock-controller@b011000 {
-			compatible = "syscon";
-			reg = <0x0b011000 0x1000>;
-		};
+		// //l2ccc for little
+		// apcs0: clock-controller@b011000 {
+		// 	compatible = "syscon";
+		// 	reg = <0x0b011000 0x1000>;
+		// };
+
+		apcs: mailbox@b011000 {
+            compatible = "qcom,msm8916-apcs-kpss-global", "syscon";
+            reg = <0xb011000 0x1000>;
+            #mbox-cells = <1>;
+            clocks = <&a53pll>, <&gcc GPLL0_VOTE>;
+            clock-names = "pll", "aux";
+            #clock-cells = <0>;
+        };
 
 		acc0: clock-controller@b088000 {
 			compatible = "qcom,arm-cortex-acc";
@@ -1649,7 +1657,7 @@
 
 		rpm {
 			interrupts = <GIC_SPI 168 IRQ_TYPE_EDGE_RISING>;
-			qcom,ipc = <&apcs0 8 0>;
+			qcom,ipc = <&apcs 8 0>;
 			qcom,smd-edge = <15>;
 
 			rpm_requests {
@@ -1699,7 +1707,7 @@
 
 		interrupts = <0 27 IRQ_TYPE_EDGE_RISING>;
 
-		qcom,ipc = <&apcs0 8 14>;
+		qcom,ipc = <&apcs 8 14>;
 
 		qcom,local-pid = <0>;
 		qcom,remote-pid = <1>;
@@ -1724,7 +1732,7 @@
 
 		interrupts = <0 143 IRQ_TYPE_EDGE_RISING>;
 
-		qcom,ipc = <&apcs0 8 18>;
+		qcom,ipc = <&apcs 8 18>;
 
 		qcom,local-pid = <0>;
 		qcom,remote-pid = <4>;
@@ -1749,8 +1757,8 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		qcom,ipc-1 = <&apcs0 8 13>;
-		qcom,ipc-3 = <&apcs0 8 19>;
+		qcom,ipc-1 = <&apcs 8 13>;
+		qcom,ipc-3 = <&apcs 8 19>;
 
 		apps_smsm: apps@0 {
 			reg = <0>;
