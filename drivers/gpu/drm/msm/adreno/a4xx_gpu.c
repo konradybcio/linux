@@ -2,6 +2,8 @@
 /* Copyright (c) 2014 The Linux Foundation. All rights reserved.
  */
 #include "a4xx_gpu.h"
+#include <linux/clk.h>
+
 
 #define A4XX_INT0_MASK \
 	(A4XX_INT0_RBBM_AHB_ERROR |        \
@@ -66,20 +68,23 @@ static void a4xx_enable_hwcg(struct msm_gpu *gpu)
 		}
 	}
 
-	for (i = 0; i < 4; i++) {
-		gpu_write(gpu, REG_A4XX_RBBM_CLOCK_CTL_MARB_CCU(i),
-				0x00000922);
-	}
+	/* No CCU for A405 */
+	if (!adreno_is_a405(adreno_gpu)) {
+		for (i = 0; i < 4; i++) {
+			gpu_write(gpu, REG_A4XX_RBBM_CLOCK_CTL_MARB_CCU(i),
+					0x00000922);
+		}
 
-	for (i = 0; i < 4; i++) {
-		gpu_write(gpu, REG_A4XX_RBBM_CLOCK_HYST_RB_MARB_CCU(i),
-				0x00000000);
-	}
+		for (i = 0; i < 4; i++) {
+			gpu_write(gpu, REG_A4XX_RBBM_CLOCK_HYST_RB_MARB_CCU(i),
+					0x00000000);
+		}
 
-	for (i = 0; i < 4; i++) {
-		gpu_write(gpu, REG_A4XX_RBBM_CLOCK_DELAY_RB_MARB_CCU_L1(i),
-				0x00000001);
-	}
+		for (i = 0; i < 4; i++) {
+			gpu_write(gpu, REG_A4XX_RBBM_CLOCK_DELAY_RB_MARB_CCU_L1(i),
+					0x00000001);
+		}
+	};
 
 	gpu_write(gpu, REG_A4XX_RBBM_CLOCK_MODE_GPC, 0x02222222);
 	gpu_write(gpu, REG_A4XX_RBBM_CLOCK_HYST_GPC, 0x04100104);
@@ -152,6 +157,8 @@ static int a4xx_hw_init(struct msm_gpu *gpu)
 		gpu_write(gpu, REG_A4XX_VBIF_IN_RD_LIM_CONF1, 0x00000018);
 		gpu_write(gpu, REG_A4XX_VBIF_IN_WR_LIM_CONF0, 0x18181818);
 		gpu_write(gpu, REG_A4XX_VBIF_IN_WR_LIM_CONF1, 0x00000018);
+		gpu_write(gpu, REG_A4XX_VBIF_ROUND_ROBIN_QOS_ARB, 0x00000003);
+	} else if (adreno_is_a405(adreno_gpu)) {
 		gpu_write(gpu, REG_A4XX_VBIF_ROUND_ROBIN_QOS_ARB, 0x00000003);
 	} else {
 		BUG();
@@ -598,7 +605,6 @@ struct msm_gpu *a4xx_gpu_init(struct drm_device *dev)
 	 */
 	icc_set_bw(gpu->icc_path, 0, Bps_to_icc(gpu->fast_rate) * 8);
 	icc_set_bw(gpu->ocmem_icc_path, 0, Bps_to_icc(gpu->fast_rate) * 8);
-
 	return gpu;
 
 fail:
