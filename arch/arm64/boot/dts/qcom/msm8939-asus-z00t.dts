@@ -1,0 +1,546 @@
+// SPDX-License-Identifier: GPL-2.0-only
+
+/dts-v1/;
+
+#include "msm8939.dtsi"
+#include "pm8916.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+/ {
+	model = "Asus Zenfone 2 Laser (1080p)";
+	compatible = "qcom,msm8939-cdp", "qcom,msm8939", "qcom,cdp";
+   	qcom,msm-id = <239 0 241 0 263 0>;
+   	qcom,board-id = <21 0>;
+
+	aliases {
+		display0 = &framebuffer0;
+		serial0 = &blsp1_uart2;
+	};
+
+	chosen {
+	bootargs = "earlycon=tty0 console=tty0 PMOS_NO_OUTPUT_REDIRECT";
+        stdout-path = "display0";
+
+        #address-cells = <2>;
+        #size-cells = <2>;
+        ranges;
+
+		framebuffer0: framebuffer@83000000 {
+				status= "ok";
+				compatible = "simple-framebuffer";
+				reg = <0x0 0x83200000 0x0 (1080 * 1920 * 3)>;
+				width = <1080>;
+				height = <1920>;
+				stride = <(1080 * 3)>;
+				format = "r8g8b8";
+				power-domains = <&gcc MDSS_GDSC>;
+				clocks = <&gcc GCC_MDSS_AHB_CLK>,
+						<&gcc GCC_MDSS_VSYNC_CLK>,
+						<&gcc GCC_MDSS_AXI_CLK>,
+						<&gcc GCC_MDSS_MDP_CLK>,
+						<&gcc GCC_MDSS_BYTE0_CLK>,
+						<&gcc GCC_MDSS_PCLK0_CLK>,
+						<&gcc GCC_MDSS_ESC0_CLK>,
+						<&xo_board>;
+		};
+	};
+
+	reserved-memory {
+		ramoops: ramoops_mem_region@8c400000 {
+			compatible = "ramoops";
+			reg = <0 0x8c400000 0 0x00100000>;
+
+			record-size = <0x40000>;
+			console-size = <0x50000>;
+			status = "ok";
+		};
+
+		cont_splash_mem: framebuffer@83000000 {
+			compatible = "removed-dma-pool";
+			reg = <0x0 0x83000000 0x0 0x2000000>; //(1080 * 1920 * 3)>;
+			no-map;
+		};
+
+		asus_debug_region@8fe00000 {
+			linux,reserve-contiguous-region;
+			linux,reserve-region;
+			linux,remove-completely;
+			no-map;
+			reg = <0x00 0x8fe00000 0x00 0x200000>;
+			label = "asus_debug_mem";
+        };
+	};
+
+	soc {
+		sdhci@7824000 {
+			status = "okay";
+
+			vmmc-supply = <&pm8916_l8>;
+			vqmmc-supply = <&pm8916_l5>;
+
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on>;
+			pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off>;
+		};
+
+		//Enabling this node breaks touchscreen driver.
+		sdhci@7864000 {
+			status = "disabled";
+
+			vmmc-supply = <&pm8916_l11>;
+			vqmmc-supply = <&pm8916_l12>;
+
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on>;
+			pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off>;
+		};
+
+		mdss@1a00000 {
+			status = "ok";
+			dsi@1a98000 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				vdda-supply = <&pm8916_l2>;
+				vddio-supply = <&pm8916_l6>;
+			};
+
+			dsi-phy@1a98300 {
+				vddio-supply = <&pm8916_l6>;
+				qcom,dsi-phy-regulator-ldo-mode;
+			};
+		};
+
+		i2c@78b6000 {
+			mpu6515@68 {
+				compatible = "invensense,mpu6515";
+				reg = <0x68>;
+				interrupts-extended = <&msmgpio 36 2>;
+				vddio-supply = <&pm8916_l6>;
+				vdd-supply = <&pm8916_l8>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&mpu6515_default>, <&mpu6515_sleep>;
+			};
+
+			//The driver complains about missing some data.
+			ak09911@c {
+				compatible = "asahi-kasei,ak09911";
+				reg = <0x0c>;
+				vdd-supply = <&pm8916_l8>;
+				vid-supply = <&pm8916_l6>;
+				gpios = <&msmgpio 0x70 0>;
+
+				status = "disabled";
+			};
+		};
+
+		i2c@78b9000 {
+			edt-ft5306@38 {
+				status = "okay";
+				compatible = "edt,edt-ft5306", "edt,edt-ft5x06";
+				pinctrl-names = "default";
+				pinctrl-0 = <&edt_ft5306_ts_pins>;
+
+				reg = <0x38>;
+				interrupt-parent = <&msmgpio>;
+				interrupts = <13 0x2008>;
+
+				reset-gpios = <&msmgpio 12 GPIO_ACTIVE_LOW>;
+
+				touchscreen-size-x = <1080>;
+				touchscreen-size-y = <1920>;
+
+				wakeup-source;
+			};
+		};
+
+		i2c@78b8000 {
+			reg_arm_dram: regulator@60 {
+				compatible = "fcs,fan53555";
+				pinctrl-names = "default";
+				pinctrl-0 = <&ext_buck_vsel>;
+				reg = <0x60>;
+				regulator-min-microvolt =  <1050000>;
+				regulator-max-microvolt = <1350000>;
+				regulator-ramp-delay = <1250>;
+				regulator-always-on;
+				vsel-gpios = <&msmgpio 111 1>;
+			};
+		};
+
+		wcnss@a21b000 {
+			status = "okay";
+		};
+
+		/*
+		 * Attempting to enable these devices causes a "synchronous
+		 * external abort". Suspected cause is that the debug power
+		 * domain is not enabled by default on this device.
+		 * Disable these devices for now to avoid the crash.
+		 *
+		 * See: https://lore.kernel.org/linux-arm-msm/20190618202623.GA53651@gerhold.net/
+		 */
+		tpiu@820000 { status = "disabled"; };
+		funnel@821000 { status = "disabled"; };
+		replicator@824000 { status = "disabled"; };
+		etf@825000 { status = "disabled"; };
+		etr@826000 { status = "disabled"; };
+		funnel@841000 { status = "disabled"; };
+		debug@850000 { status = "disabled"; };
+		debug@852000 { status = "disabled"; };
+		debug@854000 { status = "disabled"; };
+		debug@856000 { status = "disabled"; };
+		etm@85c000 { status = "disabled"; };
+		etm@85d000 { status = "disabled"; };
+		etm@85e000 { status = "disabled"; };
+		etm@85f000 { status = "disabled"; };
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		input-name = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
+
+		label = "GPIO Buttons";
+
+		button@0 {
+			label = "Volume Up";
+			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			linux,code = <KEY_VOLUMEUP>;
+			wakeup-source;
+			debounce-interval = <15>;
+		};
+
+		button@1 {
+			label = "Volume Down";
+			gpios = <&msmgpio 117 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			linux,code = <KEY_VOLUMEDOWN>;
+			wakeup-source;
+			debounce-interval = <15>;
+		};
+	};
+};
+
+&msmgpio {
+
+	edt_ft5306_ts_pins: edt_ft5306_ts_pins {
+		ts_int_active: pmx_ts_int_active {
+			pinmux {
+				pins = "gpio13";
+				function = "gpio";
+			};
+			
+			pinconf {
+				pins = "gpio13";
+				drive-strength = <16>;
+				bias-pull-up;
+			};
+		};
+
+		ts_int_suspend: pmx_ts_int_suspend {
+			pinmux {
+				pins = "gpio13";
+				function = "gpio";
+			};
+
+			pinconf {
+				pins = "gpio13";
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+		};
+
+		ts_reset_active: pmx_ts_reset_active {
+			pinmux {
+				pins = "gpio12";
+				function = "gpio";
+			};
+
+			pinconf {
+				pins = "gpio12";
+				drive-strength = <16>;
+				bias-pull-up;
+			};
+		};
+
+		ts_reset_suspend: pmx_ts_reset_suspend {
+			pinmux {
+				pins = "gpio12";
+				function = "gpio";
+			};
+
+			pinconf {
+				pins = "gpio12";
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+		};
+
+		ts_release: pmx_ts_release {
+			pinmux{
+				pins = "gpio13", "gpio12";
+				label = "pmx_ts_release";
+			};
+			
+			pinconf {
+				pins = "gpio13", "gpio12";
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+		};
+	};
+
+	lcd_en_default: lcd_en_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio21";
+		};
+		pinconf {
+			pins = "gpio21";
+			drive-strength = <6>;
+			bias-pull-up;
+		};
+	};
+
+	usb_id_default: usb_id_default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio110";
+		};
+		pinconf {
+			pins = "gpio110";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	pmx_mdss {
+		mdss_default: mdss_default {
+			pinmux {
+				function = "gpio";
+				pins = "gpio25";
+			};
+			pinconf {
+				pins = "gpio25";
+				drive-strength = <8>;
+				bias-disable;
+			};
+		};
+
+		mdss_sleep: mdss_sleep {
+			pinmux {
+				function = "gpio";
+				pins = "gpio25";
+			};
+			pinconf {
+				pins = "gpio25";
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+		};
+	};
+
+	usb_vbus_default: usb-vbus-default {
+		pinmux {
+			function = "gpio";
+			pins = "gpio62";
+		};
+		pinconf {
+			pins = "gpio62";
+			bias-pull-up;
+		};
+	};
+
+	ext_buck_vsel: ext_buck_vsel {
+		pinmux {
+			function = "gpio";
+			pins = "gpio111";
+		};
+		pinconf{
+			pins = "gpio111";
+			drive-strength = <2>;
+		};
+	};
+
+	mpu6515_int_pin {
+		mpu6515_default: mpu6515_default {
+			pinmux {
+				function = "gpio";
+				pins = "gpio36";
+			};
+			pinconf {
+				pins = "gpio36";
+				bias-pull-up;
+				drive-strength = <6>;
+			};
+		};
+
+		mpu6515_sleep: mpu6515_sleep {
+			pinmux {
+				function = "gpio";
+				pins = "gpio36";
+			};
+			pinconf {
+				pins = "gpio36";
+				drive-strength = <2>;
+			};
+		};
+	};
+
+};
+
+&smd_rpm_regulators {
+	vdd_l1_l2_l3-supply = <&pm8916_s3>;
+	vdd_l4_l5_l6-supply = <&pm8916_s4>;
+	vdd_l7-supply = <&pm8916_s4>;
+
+	s1 {
+		regulator-min-microvolt = <500000>;
+		regulator-max-microvolt = <1300000>;
+	};
+
+	s3 {
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1300000>;
+	};
+
+	s4 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <2100000>;
+	};
+
+	l1 {
+		regulator-min-microvolt = <1225000>;
+		regulator-max-microvolt = <1225000>;
+	};
+
+	l2 {
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+	};
+
+	l3 {
+		regulator-min-microvolt = <500000>;
+		regulator-max-microvolt = <1287500>;
+	};
+
+	l4 {
+		regulator-min-microvolt = <2050000>;
+		regulator-max-microvolt = <2050000>;
+	};
+
+	l5 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+	};
+
+	l6 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+	};
+
+	l7 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+	};
+
+	l8 {
+		regulator-min-microvolt = <2850000>;
+		regulator-max-microvolt = <2900000>;
+	};
+
+	l9 {
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	l10 {
+		regulator-min-microvolt = <2700000>;
+		regulator-max-microvolt = <2800000>;
+	};
+
+	l11 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <2950000>;
+		regulator-allow-set-load;
+		regulator-system-load = <200000>;
+	};
+
+	l12 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <2950000>;
+	};
+
+	l13 {
+		regulator-min-microvolt = <3075000>;
+		regulator-max-microvolt = <3075000>;
+	};
+
+	l14 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	l15 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	l16 {
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <3300000>;
+	};
+
+	l17 {
+		regulator-min-microvolt = <2850000>;
+		regulator-max-microvolt = <2850000>;
+	};
+
+	l18 {
+		regulator-min-microvolt = <2700000>;
+		regulator-max-microvolt = <2700000>;
+	};
+};
+
+&dsi0 {
+			pinctrl-names = "default", "sleep";
+			pinctrl-0 = <&mdss_default>;
+			pinctrl-1 = <&mdss_sleep>;
+
+			panel@0 {
+				compatible = "mdss,tm5p5-nt35596";
+				reg = <0>;
+
+				reset-gpios = <&msmgpio 25 GPIO_ACTIVE_HIGH>;
+				vdd-supply = <&pm8916_l8>;
+				vddio-supply = <&pm8916_l6>;
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						reg = <0>;
+						panel_in: endpoint {
+							remote-endpoint = <&dsi0_out>;
+						};
+					};
+				};
+			};
+
+			ports {
+				port@1 {
+					endpoint {
+						remote-endpoint = <&panel_in>;
+						data-lanes = <0 1 2 3>;
+					};
+				};
+			};
+		};
