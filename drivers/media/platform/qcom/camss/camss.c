@@ -125,6 +125,102 @@ static const struct resources vfe_res_8x16[] = {
 	}
 };
 
+static const struct resources csiphy_res_8x39[] = {
+	/* CSIPHY0 */
+	{
+		.regulator = { NULL },
+		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy0_timer" },
+		.clock_rate = { { 0 },
+				{ 0 },
+				{ 0 },
+				{ 100000000, 200000000 } },
+		.reg = { "csiphy0", "csiphy0_clk_mux" },
+		.interrupt = { "csiphy0" }
+	},
+
+	/* CSIPHY1 */
+	{
+		.regulator = { NULL },
+		.clock = { "top_ahb", "ispif_ahb", "ahb", "csiphy1_timer" },
+		.clock_rate = { { 0 },
+				{ 0 },
+				{ 0 },
+				{ 100000000, 200000000 } },
+		.reg = { "csiphy1", "csiphy1_clk_mux" },
+		.interrupt = { "csiphy1" }
+	}
+};
+
+static const struct resources csid_res_8x39[] = {
+	/* CSID0 */
+	{
+		.regulator = { "vdda" },
+		.clock = { "top_ahb", "ispif_ahb", "csi0_ahb", "ahb",
+			   "csi0", "csi0_phy", "csi0_pix", "csi0_rdi" },
+		.clock_rate = { { 0 },
+				{ 0 },
+				{ 0 },
+				{ 0 },
+				{ 100000000, 200000000 },
+				{ 0 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "csid0" },
+		.interrupt = { "csid0" }
+	},
+
+	/* CSID1 */
+	{
+		.regulator = { "vdda" },
+		.clock = { "top_ahb", "ispif_ahb", "csi1_ahb", "ahb",
+			   "csi1", "csi1_phy", "csi1_pix", "csi1_rdi" },
+		.clock_rate = { { 0 },
+				{ 0 },
+				{ 0 },
+				{ 0 },
+				{ 100000000, 200000000 },
+				{ 0 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "csid1" },
+		.interrupt = { "csid1" }
+	},
+};
+
+static const struct resources_ispif ispif_res_8x39 = {
+	/* ISPIF */
+	.clock = { "top_ahb", "ahb", "ispif_ahb",
+		   "csi0", "csi0_pix", "csi0_rdi",
+		   "csi1", "csi1_pix", "csi1_rdi" },
+	.clock_for_reset = { "vfe0", "csi_vfe0" },
+	.reg = { "ispif", "csi_clk_mux" },
+	.interrupt = "ispif"
+
+};
+
+static const struct resources vfe_res_8x39[] = {
+	/* VFE0 */
+	{
+		.regulator = { NULL },
+		.clock = { "top_ahb", "vfe0", "csi_vfe0",
+			   "vfe_ahb", "vfe_axi", "ahb" },
+		.clock_rate = { { 0 },
+				{ 50000000, 80000000, 100000000, 160000000,
+				  177780000, 200000000, 266670000, 320000000,
+				  400000000, 465000000, 480000000, 600000000 },
+				{ 0 },
+				{ 0 },
+				{ 0 },
+				{ 0 },
+				{ 0 },
+				{ 0 },
+				{ 0 } },
+		.reg = { "vfe0" },
+		.interrupt = { "vfe0" }
+	}
+};
+
+
 static const struct resources csiphy_res_8x96[] = {
 	/* CSIPHY0 */
 	{
@@ -529,6 +625,11 @@ static int camss_init_subdevices(struct camss *camss)
 		csid_res = csid_res_8x16;
 		ispif_res = &ispif_res_8x16;
 		vfe_res = vfe_res_8x16;
+	} else if (camss->version == CAMSS_8x39) {
+		csiphy_res = csiphy_res_8x39;
+		csid_res = csid_res_8x39;
+		ispif_res = &ispif_res_8x39;
+		vfe_res = vfe_res_8x39;
 	} else if (camss->version == CAMSS_8x96) {
 		csiphy_res = csiphy_res_8x96;
 		csid_res = csid_res_8x96;
@@ -829,6 +930,12 @@ static int camss_probe(struct platform_device *pdev)
 		camss->csid_num = 2;
 		camss->vfe_num = 1;
 	} else if (of_device_is_compatible(dev->of_node,
+						"qcom,msm8939-camss")) {
+		camss->version = CAMSS_8x39;
+		camss->csiphy_num = 2;
+		camss->csid_num = 2;
+		camss->vfe_num = 1;
+	} else if (of_device_is_compatible(dev->of_node,
 					   "qcom,msm8996-camss")) {
 		camss->version = CAMSS_8x96;
 		camss->csiphy_num = 3;
@@ -983,6 +1090,7 @@ static int camss_remove(struct platform_device *pdev)
 
 static const struct of_device_id camss_dt_match[] = {
 	{ .compatible = "qcom,msm8916-camss" },
+	{ .compatible = "qcom,msm8939-camss" },
 	{ .compatible = "qcom,msm8996-camss" },
 	{ }
 };
