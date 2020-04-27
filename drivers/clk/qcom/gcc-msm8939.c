@@ -19,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
+#include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/regmap.h>
 #include <linux/reset-controller.h>
@@ -347,6 +348,24 @@ static const char * const gcc_xo_gpll6_gpll0a[] = {
 	"xo",
 	"gpll6_vote",
 	"gpll0_vote",
+};
+
+static struct clk_fixed_factor xo = {
+	.mult = 1,
+	.div = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "xo",
+		.parent_names = (const char *[]){ "xo_board" },
+		.num_parents = 1,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
+static struct clk_fixed_factor wcnss_m_clk = {
+	.hw.init = &(struct clk_init_data){
+		.name = "wcnss_m_clk",
+		.ops = &clk_fixed_factor_ops,
+	},
 };
 
 /* GPLL0 @ 800 MHz */
@@ -3576,6 +3595,11 @@ static struct clk_branch gcc_oxili_timer_clk = {
 	},
 };
 
+static struct clk_hw *gcc_msm8939_hws[] = {
+	&xo.hw,
+	&wcnss_m_clk.hw,
+};
+
 static struct gdsc venus_gdsc = {
 	.gdscr = 0x4c018,
 	.pd = {
@@ -3952,6 +3976,8 @@ static const struct qcom_cc_desc gcc_msm8939_desc = {
 	.num_resets = ARRAY_SIZE(gcc_msm8939_resets),
 	.gdscs = gcc_msm8939_gdscs,
 	.num_gdscs = ARRAY_SIZE(gcc_msm8939_gdscs),
+	.clk_hws = gcc_msm8939_hws,
+	.num_clk_hws = ARRAY_SIZE(gcc_msm8939_hws),
 };
 
 static const struct of_device_id gcc_msm8939_match_table[] = {
@@ -3963,24 +3989,39 @@ MODULE_DEVICE_TABLE(of, gcc_msm8939_match_table);
 static int gcc_msm8939_probe(struct platform_device *pdev)
 {
 	int ret;
-	struct device *dev = &pdev->dev;
 	struct regmap *regmap;
+	u32 val;
 
-	ret = qcom_cc_register_board_clk(dev, "xo_board", "xo", 19200000);
-	if (ret)
-		return ret;
+	regmap = qcom_cc_map(pdev, &gcc_msm8939_desc);
+        if (IS_ERR(regmap))
+                return PTR_ERR(regmap);
 
-	ret = qcom_cc_register_sleep_clk(dev);
-	if (ret)
-		return ret;
+	/* Vote for GPLL0 to turn on. Needed by acpuclock. */
+    regmap_update_bits(regmap, 0x45000, BIT(0), BIT(0));
 
-	ret = qcom_cc_probe(pdev, &gcc_msm8939_desc);
-	if (ret)
-		return ret;
+	ret = qcom_cc_really_probe(pdev, &gcc_msm8939_desc, regmap);
+		if (ret) {
+			dev_err(&pdev->dev, "Failed to register GCC clocks\n");
+			return ret;
+	}
+	
+    clk_set_rate(apss_ahb_clk_src.clkr.hw.clk, 19200000);
+    clk_prepare_enable(apss_ahb_clk_src.clkr.hw.clk);
 
-	regmap = dev_get_regmap(&pdev->dev, NULL);
+    /* Configure wakeup and sleep cycles for gmem clock */
+    regmap_read(regmap, 0x59024, &val);
+    val ^= 0xFF0;  
+    val |= (0 << 8);
+    val |= (0 << 4);
+    regmap_write(regmap, 0x59024, val);
+
 	clk_pll_configure_sr_hpm_lp(&gpll3, regmap, &gpll3_config, true);
 	clk_pll_configure_sr_hpm_lp(&gpll4, regmap, &gpll4_config, true);
+
+	clk_set_rate(gpll3.clkr.hw.clk, 1100000000);
+
+	/* Enable AUX2 clock for APSS */
+	regmap_update_bits(regmap, 0x60000, BIT(2), BIT(2));
 
 	return 0;
 }
