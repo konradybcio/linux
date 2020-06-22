@@ -39,6 +39,7 @@ properties:
               - qcom,msm8996-tsens
               - qcom,msm8998-tsens
               - qcom,sc7180-tsens
+              - qcom,sdm630-tsens
               - qcom,sdm845-tsens
           - const: qcom,tsens-v2
 
