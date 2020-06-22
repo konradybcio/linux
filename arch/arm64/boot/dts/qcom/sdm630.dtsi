@@ -428,6 +428,52 @@
 				compatible = "qcom,rpmcc-sdm660", "qcom,rpmcc";
 				#clock-cells = <1>;
 			};
+
+			rpmpd: power-controller {
+				compatible = "qcom,sdm660-rpmpd";
+				#power-domain-cells = <1>;
+				operating-points-v2 = <&rpmpd_opp_table>;
+
+				rpmpd_opp_table: opp-table {
+					compatible = "operating-points-v2";
+
+					rpmpd_opp_ret: opp1 {
+						opp-level = <16>;
+					};
+
+					rpmpd_opp_ret_plus: opp2 {
+						opp-level = <32>;
+					};
+
+					rpmpd_opp_min_svs: opp3 {
+						opp-level = <48>;
+					};
+
+					rpmpd_opp_low_svs: opp4 {
+						opp-level = <64>;
+					};
+
+					rpmpd_opp_svs: opp5 {
+						opp-level = <128>;
+					};
+
+					rpmpd_opp_svs_plus: opp6 {
+						opp-level = <192>;
+					};
+
+					rpmpd_opp_nom: opp7 {
+						opp-level = <256>;
+					};
+
+					rpmpd_opp_nom_plus: opp8 {
+						opp-level = <320>;
+					};
+
+					rpmpd_opp_turbo: opp9 {
+						opp-level = <384>;
+					};
+				};
+			};
 		};
 	};
 
