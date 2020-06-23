@@ -47,6 +47,7 @@
 						&PERF_CLUSTER_SLEEP_0
 						&PERF_CLUSTER_SLEEP_1
 						&PERF_CLUSTER_SLEEP_2>;
+			operating-points-v2 = <&cpu_opp_table_perf>;
 			capacity-dmips-mhz = <1126>;
 			#cooling-cells = <2>;
 			next-level-cache = <&L2_1>;
@@ -66,6 +67,7 @@
 						&PERF_CLUSTER_SLEEP_0
 						&PERF_CLUSTER_SLEEP_1
 						&PERF_CLUSTER_SLEEP_2>;
+			operating-points-v2 = <&cpu_opp_table_perf>;
 			capacity-dmips-mhz = <1126>;
 			#cooling-cells = <2>;
 			next-level-cache = <&L2_1>;
@@ -81,6 +83,7 @@
 						&PERF_CLUSTER_SLEEP_0
 						&PERF_CLUSTER_SLEEP_1
 						&PERF_CLUSTER_SLEEP_2>;
+			operating-points-v2 = <&cpu_opp_table_perf>;
 			capacity-dmips-mhz = <1126>;
 			#cooling-cells = <2>;
 			next-level-cache = <&L2_1>;
@@ -96,6 +99,7 @@
 						&PERF_CLUSTER_SLEEP_0
 						&PERF_CLUSTER_SLEEP_1
 						&PERF_CLUSTER_SLEEP_2>;
+			operating-points-v2 = <&cpu_opp_table_perf>;
 			capacity-dmips-mhz = <1126>;
 			#cooling-cells = <2>;
 			next-level-cache = <&L2_1>;
@@ -111,6 +115,7 @@
 						&PWR_CLUSTER_SLEEP_0
 						&PWR_CLUSTER_SLEEP_1
 						&PWR_CLUSTER_SLEEP_2>;
+			operating-points-v2 = <&cpu_opp_table_pwr>;
 			capacity-dmips-mhz = <1024>;
 			#cooling-cells = <2>;
 			next-level-cache = <&L2_0>;
@@ -130,6 +135,7 @@
 						&PWR_CLUSTER_SLEEP_0
 						&PWR_CLUSTER_SLEEP_1
 						&PWR_CLUSTER_SLEEP_2>;
+			operating-points-v2 = <&cpu_opp_table_pwr>;
 			capacity-dmips-mhz = <1024>;
 			#cooling-cells = <2>;
 			next-level-cache = <&L2_0>;
@@ -145,6 +151,7 @@
 						&PWR_CLUSTER_SLEEP_0
 						&PWR_CLUSTER_SLEEP_1
 						&PWR_CLUSTER_SLEEP_2>;
+			operating-points-v2 = <&cpu_opp_table_pwr>;
 			capacity-dmips-mhz = <1024>;
 			#cooling-cells = <2>;
 			next-level-cache = <&L2_0>;
@@ -160,6 +167,7 @@
 						&PWR_CLUSTER_SLEEP_0
 						&PWR_CLUSTER_SLEEP_1
 						&PWR_CLUSTER_SLEEP_2>;
+			operating-points-v2 = <&cpu_opp_table_pwr>;
 			capacity-dmips-mhz = <1024>;
 			#cooling-cells = <2>;
 			next-level-cache = <&L2_0>;
@@ -303,6 +311,72 @@
 				min-residency-us = <9987>;
 				local-timer-stop;
 			};
+		};
+	};
+
+	cpu_opp_table_perf: cpu-opp-table-perf {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp-787200000 {
+			opp-hz = /bits/ 64 <787200000>;
+		};
+		opp-1113600000 {
+			opp-hz = /bits/ 64 <1113600000>;
+		};
+		opp-1344000000 {
+			opp-hz = /bits/ 64 <1344000000>;
+		};
+		opp-1516800000 {
+			opp-hz = /bits/ 64 <1516800000>;
+		};
+		opp-1670400000 {
+			opp-hz = /bits/ 64 <1670400000>;
+		};
+		opp-1881600000 {
+			opp-hz = /bits/ 64 <1881600000>;
+		};
+		opp-2016000000 {
+			opp-hz = /bits/ 64 <2016000000>;
+		};
+		opp-2150400000 {
+			opp-hz = /bits/ 64 <2150400000>;
+		};
+		opp-2208000000 {
+			opp-hz = /bits/ 64 <2208000000>;
+		};
+		opp-2380800000 {
+			opp-hz = /bits/ 64 <2380800000>;
+		};
+		opp-2515200000 {
+			opp-hz = /bits/ 64 <2515200000>;
+		};
+	};
+
+	cpu_opp_table_pwr: cpu-opp-table-pwr {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp-614400000 {
+			opp-hz = /bits/ 64 <614400000>;
+		};
+		opp-883200000 {
+			opp-hz = /bits/ 64 <883200000>;
+		};
+		opp-1094400000 {
+			opp-hz = /bits/ 64 <1094400000>;
+		};
+		opp-1382400000 {
+			opp-hz = /bits/ 64 <1382400000>;
+		};
+		opp-1536000000 {
+			opp-hz = /bits/ 64 <1536000000>;
+		};
+		opp-1728000000 {
+			opp-hz = /bits/ 64 <1728000000>;
+		};
+		opp-1843200000 {
+			opp-hz = /bits/ 64 <1843200000>;
 		};
 	};
 
