@@ -63,14 +63,11 @@
 			debounce-interval = <15>;
 		};
 
-		vol_down {
-			label = "Volume Down";
-			gpios = <&pm660l_gpios 7 GPIO_ACTIVE_LOW>;
-			linux,input-type = <1>;
-			linux,code = <KEY_VOLUMEDOWN>;
-			gpio-key,wakeup;
-			debounce-interval = <15>;
-		};
+		/* Nile also uses gpio-keys for
+		 * Volume Down,  but currently there's an
+		 * issue with it that has to be resolved.
+		 * Until then, let's not make the kernel panic
+		 */
 	};
 
 	reserved-memory {
