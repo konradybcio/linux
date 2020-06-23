@@ -13,13 +13,6 @@
 #include "sdm630-sony-xperia-nile.dtsi"
 
 / {
-	chosen {
-		framebuffer@9d400000 {
-			reg = <0 0x9d400000 0 (2520 * 1080 * 4)>;
-			height = <2520>;
-		};
-	};
-
 	/* Yes, this is intentional.
 	 * Ganges devices only use gpio-keys for
 	 * Volume Down, but currently there's an
@@ -27,14 +20,15 @@
 	 * Until then, let's not make the kernel panic
 	 */
 	/delete-node/ gpio-keys;
+};
 
-	soc {
+&framebuffer0 {
+	reg = <0 0x9d400000 0 (2520 * 1080 * 4)>;
+	height = <2520>;
+};
 
-		i2c@c175000 {
-			status = "okay";
+&blsp_i2c1 {
+	status = "okay";
 
-			/* Novatek touchscreen */
-		};
-	};
-
+	/* Novatek touchscreen */
 };
