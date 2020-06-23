@@ -148,3 +148,7 @@
 	vdd-3.3-ch0-supply = <&pm660_l19_pin_ctrl>;
 	*/
 };
+
+&tlmm {
+	gpio-reserved-ranges = <8 4>;
+};
