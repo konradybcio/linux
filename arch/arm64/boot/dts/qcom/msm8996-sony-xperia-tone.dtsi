@@ -54,122 +54,150 @@
 				vdd_l20_l21-supply = <&pm8994_s5>;
 				vdd_l25-supply = <&pm8994_s3>;
 
-				s3 {
+				pm8994_s3: s3 {
 					regulator-min-microvolt = <1300000>;
 					regulator-max-microvolt = <1300000>;
 				};
 
-				s4 {
+				pm8994_s4: s4 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <1800000>;
 					regulator-always-on;
 				};
-				s5 {
+
+				pm8994_s5: s5 {
 					regulator-min-microvolt = <2150000>;
 					regulator-max-microvolt = <2150000>;
 				};
-				s7 {
+
+				pm8994_s7: s7 {
 					regulator-min-microvolt = <800000>;
 					regulator-max-microvolt = <800000>;
 				};
 
-				l1 {
+				pm8994_l1: l1 {
 					regulator-min-microvolt = <1000000>;
 					regulator-max-microvolt = <1000000>;
 				};
-				l2 {
+
+				pm8994_l2: l2 {
 					regulator-min-microvolt = <1250000>;
 					regulator-max-microvolt = <1250000>;
 				};
-				l3 {
+
+				pm8994_l3: l3 {
 					regulator-min-microvolt = <1100000>;
 					regulator-max-microvolt = <1100000>;
 				};
-				l4 {
+
+				pm8994_l4: l4 {
 					regulator-min-microvolt = <1225000>;
 					regulator-max-microvolt = <1225000>;
 				};
+
 				l6 {};
+
 				l7 {};
-				l8 {
+
+				pm8994_l8: l8 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <1800000>;
 				};
-				l9 {
+
+				pm8994_l9: l9 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <1800000>;
 				};
-				l10 {
+
+				pm8994_l10: l10 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <1800000>;
 				};
+
 				l11 {};
-				l12 {
+
+				pm8994_l12: l12 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <1800000>;
 				};
-				l13 {
+
+				pm8994_l13: l13 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <2950000>;
 				};
+
 				l14 {};
-				l15 {
+
+				pm8994_l15: l15 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <1800000>;
 				};
-				l16 {
+
+				pm8994_l16: l16 {
 					regulator-min-microvolt = <2700000>;
 					regulator-max-microvolt = <2700000>;
 				};
-				l17 {
+
+				pm8994_l17: l17 {
 					regulator-min-microvolt = <2200000>;
 					regulator-max-microvolt = <2500000>;
 				};
-				l18 {
+
+				pm8994_l18: l18 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <1800000>;
 				};
-				l20 {
+
+				pm8994_l20: l20 {
 					regulator-min-microvolt = <2950000>;
 					regulator-max-microvolt = <2950000>;
 					regulator-allow-set-load;
 				};
-				l21 {
+
+				pm8994_l21: l21 {
 					regulator-min-microvolt = <2950000>;
 					regulator-max-microvolt = <2950000>;
 				};
-				l22 {
+
+				pm8994_l22: l22 {
 					regulator-min-microvolt = <3000000>;
 					regulator-max-microvolt = <3000000>;
 				};
-				l23 {
+
+				pm8994_l23: l23 {
 					regulator-min-microvolt = <2700000>;
 					regulator-max-microvolt = <2700000>;
 				};
-				l24 {
+
+				pm8994_l24: l24 {
 					regulator-min-microvolt = <3075000>;
 					regulator-max-microvolt = <3075000>;
 					regulator-allow-set-load;
 				};
-				l25 {
+
+				pm8994_l25: l25 {
 					regulator-min-microvolt = <1200000>;
 					regulator-max-microvolt = <1200000>;
 					regulator-allow-set-load;
 				};
-				l27 {
+
+				pm8994_l27: l27 {
 					regulator-min-microvolt = <1000000>;
 					regulator-max-microvolt = <1200000>;
 				};
-				l28 { /* This should be 1.0V for USB, 0.925 for DSI :\ */
+
+				pm8994_l28: l28 { /* This should be 1.0V for USB, 0.925 for DSI :\ */
 					regulator-min-microvolt = <925000>;
 					regulator-max-microvolt = <925000>;
 					regulator-allow-set-load;
 				};
-				l29 {
+
+				pm8994_l29: l29 {
 					regulator-min-microvolt = <2700000>;
 					regulator-max-microvolt = <2700000>;
 				};
-				l32 {
+
+				pm8994_l32: l32 {
 					regulator-min-microvolt = <1800000>;
 					regulator-max-microvolt = <1800000>;
 				};
@@ -382,61 +410,61 @@
 		};
 	};
 
-	adreno_smmu: arm,smmu@b40000 {
-		compatible = "qcom,msm8996-smmu-v2", "qcom,smmu-v2";
-		reg = <0xb40000 0x10000>;
+// 	adreno_smmu: arm,smmu@b40000 {
+// 		compatible = "qcom,msm8996-smmu-v2", "qcom,smmu-v2";
+// 		reg = <0xb40000 0x10000>;
 
-		#global-interrupts = <1>;
-		interrupts = <GIC_SPI 334 IRQ_TYPE_LEVEL_HIGH>,
-			     <GIC_SPI 329 IRQ_TYPE_LEVEL_HIGH>,
-			     <GIC_SPI 330 IRQ_TYPE_LEVEL_HIGH>;
-		#iommu-cells = <1>;
+// 		#global-interrupts = <1>;
+// 		interrupts = <GIC_SPI 334 IRQ_TYPE_LEVEL_HIGH>,
+// 			     <GIC_SPI 329 IRQ_TYPE_LEVEL_HIGH>,
+// 			     <GIC_SPI 330 IRQ_TYPE_LEVEL_HIGH>;
+// 		#iommu-cells = <1>;
 
-/*
-		clocks = <&mmcc GPU_AHB_CLK>,
-			<&gcc GCC_MMSS_BIMC_GFX_CLK>;
-		clock-names = "bus", "iface";
-*/
-		clocks = <&mmcc MMSS_MMAGIC_AHB_CLK>,
-			<&mmcc MMSS_MMAGIC_CFG_AHB_CLK>,
-			<&mmcc GPU_AHB_CLK>,
-			<&gcc GCC_MMSS_BIMC_GFX_CLK>,
-			<&gcc GCC_BIMC_GFX_CLK>;
-		clock-names = "mmagic_ahb_clk", "mmagic_cfg_ahb_clk", "gpu_ahb_clk",
-			"gcc_mmss_bimc_gfx_clk", "gcc_bimc_gfx_clk";
+// /*
+// 		clocks = <&mmcc GPU_AHB_CLK>,
+// 			<&gcc GCC_MMSS_BIMC_GFX_CLK>;
+// 		clock-names = "bus", "iface";
+// */
+// 		clocks = <&mmcc MMSS_MMAGIC_AHB_CLK>,
+// 			<&mmcc MMSS_MMAGIC_CFG_AHB_CLK>,
+// 			<&mmcc GPU_AHB_CLK>,
+// 			<&gcc GCC_MMSS_BIMC_GFX_CLK>,
+// 			<&gcc GCC_BIMC_GFX_CLK>;
+// 		clock-names = "mmagic_ahb_clk", "mmagic_cfg_ahb_clk", "gpu_ahb_clk",
+// 			"gcc_mmss_bimc_gfx_clk", "gcc_bimc_gfx_clk";
 
-		power-domains = <&mmcc GPU_GDSC>;
+// 		power-domains = <&mmcc GPU_GDSC>;
 
-		status = "ok";
-	};
+// 		status = "ok";
+// 	};
 
-	mdp_smmu: arm,smmu@d00000 {
-		compatible = "qcom,msm8996-smmu-v2", "qcom,smmu-v2";
-		reg = <0xd00000 0x10000>;
+// 	mdp_smmu: arm,smmu@d00000 {
+// 		compatible = "qcom,msm8996-smmu-v2", "qcom,smmu-v2";
+// 		reg = <0xd00000 0x10000>;
 
-		#global-interrupts = <1>;
-		interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>,
-			     <GIC_SPI 320 IRQ_TYPE_LEVEL_HIGH>,
-			     <GIC_SPI 321 IRQ_TYPE_LEVEL_HIGH>;
-		#iommu-cells = <1>;
+// 		#global-interrupts = <1>;
+// 		interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>,
+// 			     <GIC_SPI 320 IRQ_TYPE_LEVEL_HIGH>,
+// 			     <GIC_SPI 321 IRQ_TYPE_LEVEL_HIGH>;
+// 		#iommu-cells = <1>;
 
-		power-domains = <&mmcc MDSS_GDSC>;
-/*
-		clocks = <&mmcc SMMU_MDP_AHB_CLK>,
-			 <&mmcc SMMU_MDP_AXI_CLK>;
-		clock-names = "iface", "bus";
-*/
-		clocks = <&mmcc MMSS_MMAGIC_AHB_CLK>,
-			<&mmcc MMSS_MMAGIC_CFG_AHB_CLK>,
-			<&mmcc SMMU_MDP_AHB_CLK>,
-			<&mmcc SMMU_MDP_AXI_CLK>,
-			<&mmcc MMAGIC_MDSS_AXI_CLK>;
-		clock-names = "mmagic_ahb_clk", "mmagic_cfg_ahb_clk",
-			"mdp_ahb_clk", "mdp_axi_clk",
-			"mmagic_mdss_axi_clk";
+// 		power-domains = <&mmcc MDSS_GDSC>;
+// /*
+// 		clocks = <&mmcc SMMU_MDP_AHB_CLK>,
+// 			 <&mmcc SMMU_MDP_AXI_CLK>;
+// 		clock-names = "iface", "bus";
+// */
+// 		clocks = <&mmcc MMSS_MMAGIC_AHB_CLK>,
+// 			<&mmcc MMSS_MMAGIC_CFG_AHB_CLK>,
+// 			<&mmcc SMMU_MDP_AHB_CLK>,
+// 			<&mmcc SMMU_MDP_AXI_CLK>,
+// 			<&mmcc MMAGIC_MDSS_AXI_CLK>;
+// 		clock-names = "mmagic_ahb_clk", "mmagic_cfg_ahb_clk",
+// 			"mdp_ahb_clk", "mdp_axi_clk",
+// 			"mmagic_mdss_axi_clk";
 
-		status = "ok";
-	};
+// 		status = "ok";
+// 	};
 
 	gpu@b00000 {
 		compatible = "qcom,adreno-530.2", "qcom,adreno";
@@ -604,8 +632,8 @@
 				};
 			};
 
-			lgd_panel0: lgd-panel@0 {
-				compatible = "lgd,syn-incell-fhd-ips-lcd";
+			lgd_panel0: jdi-panel@0 {
+				compatible = "panel-jdi-syn-XXXsuzu";
 				reg = <0>;
 				status = "okay";
 				disp-te-gpio = <&msmgpio 10 0>;

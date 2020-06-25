@@ -10,7 +10,8 @@
 / {
 	model = "SoMC Tone Kagura-ROW";
 	compatible = "somc,kagura-row", "qcom,msm8996";
-
+	qcom,msm-id = <0xf6 0x30000>;
+    qcom,pmic-id = <0x20009 0x2000a 0x00 0x00>;
 	qcom,board-id = <8 0>;
 
 	rpm-glink {
