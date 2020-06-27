@@ -20,6 +20,8 @@
 	 * Until then, let's not make the kernel panic
 	 */
 	/delete-node/ gpio-keys;
+
+	/delete-node/ i2c;
 };
 
 &framebuffer0 {

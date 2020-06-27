@@ -96,12 +96,53 @@
 			no-map;
 		};
 	};
+
+	/* This is not exactly pretty, but required for TS to work.. */
+
+	i2c1_touch: i2c {
+		compatible = "i2c-gpio";
+		status = "okay";
+
+		sda-gpios = <&tlmm 2 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+		scl-gpios = <&tlmm 3 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clock-frequency = <400000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&i2c1_default>;
+
+		touchscreen: synaptics-rmi4-i2c@70 {
+			compatible = "syna,rmi4-i2c";
+			reg = <0x70>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupts-extended = <&tlmm 45 0x2008>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&ts_int_active &ts_lcd_id_active>;
+
+			syna,reset-delay-ms = <200>;
+			syna,startup-delay-ms = <220>;
+
+			rmi4-f01@1 {
+				reg = <0x01>;
+				syna,nosleep-mode = <1>;
+			};
+
+			rmi4-f11@11 {
+				reg = <0x11>;
+				syna,sensor-type = <1>;
+			};
+		};
+	};
 };
 
 &blsp_i2c1 {
 	status = "okay";
 
-	/* Synaptics touchscreen */
+	/* Synaptics touchscreen - see above */
 };
 
 &blsp_i2c2 {
@@ -160,4 +201,16 @@
 
 &tlmm {
 	gpio-reserved-ranges = <8 4>;
+
+	ts_int_active: ts-int-active {
+		pins = "gpio45";
+		drive-strength = <8>;
+		bias-pull-up;
+	};
+
+	ts_lcd_id_active: ts-lcd-id-active {
+		pins = "gpio56";
+		drive-strength = <8>;
+		bias-disable;
+	};
 };
