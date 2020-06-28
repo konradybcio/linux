@@ -6,12 +6,13 @@
 /dts-v1/;
 
 #include "msm8996-sony-xperia-tone.dtsi"
+//#include "msm8996.dtsi"
 
 / {
 	model = "SoMC Tone Kagura-ROW";
 	compatible = "somc,kagura-row", "qcom,msm8996";
 	qcom,msm-id = <0xf6 0x30000>;
-    qcom,pmic-id = <0x20009 0x2000a 0x00 0x00>;
+	qcom,pmic-id = <0x20009 0x10013 0x00 0x00>;
 	qcom,board-id = <8 0>;
 
 	rpm-glink {
@@ -30,6 +31,26 @@
 	vl53l0x@29 {
 		compatible = "st,vl53l0x";
 		reg = <0x29>;
+	};
+};
+
+&blsp2_i2c11 {
+	fusb301@25 {
+		status = "okay";
+		compatible = "fusb301";
+		reg = <0x25>;
+		interrupt-parent = <&msmgpio>;
+		interrupts = <0x3b 0x02>,
+				<0x83 0x03>;
+		fusb301,cbl_sns-enabled;
+		fusb301,cbl_sns-gpio = <&msmgpio 0x19 0x00>;
+		fusb301,int-gpio = <&msmgpio 0x3b 0x00>;
+		fusb301,cbl_det-gpio = <&msmgpio 0x83 0x00>;
+		fusb301,use-try-snk-emulation;
+		fusb301,ext_typec_ctrl-enabled;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb_cable_det_n_gpio &usb_cable_sense_en_gpio
+				&usb_cc_int_n_gpio>;
 	};
 };
 
