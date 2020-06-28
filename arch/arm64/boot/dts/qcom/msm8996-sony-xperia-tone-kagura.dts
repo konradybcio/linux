@@ -54,6 +54,85 @@
 	};
 };
 
+&dsi0 {
+	status = "okay";
+
+	vdda-supply = <&pm8994_l2>;
+	vcca-supply = <&pm8994_l28>;
+	
+	panel: panel@0 {
+		compatible = "jdi,syn-incell,xxxsuzu";
+		reg = <0>;
+		status = "okay";
+		disp-te-gpio = <&msmgpio 10 0>;
+
+		vddio-supply = <&pm8994_s4>;
+		avdd-supply = <&pm8994_l22>;
+
+		pvddio-gpio = <&msmgpio 51 GPIO_ACTIVE_HIGH>;
+		preset-gpio = <&msmgpio 8 GPIO_ACTIVE_HIGH>;
+		tvddio-gpio = <&msmgpio 50 GPIO_ACTIVE_HIGH>;
+		treset-gpio = <&msmgpio 89 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 =
+			<&mdp_vsync_p_gpio &disp_reset_n_gpio
+			&tp_vddio_en_gpio &lcd_vddio_en_gpio
+			&ts_reset_n_gpio>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			port@0 {
+				reg = <0>;
+				panel_in: endpoint {
+					remote-endpoint = <&dsi0_out>;
+				};
+			};
+		};
+	};
+};
+
+&dsi0_out {
+	remote-endpoint = <&panel_in>;
+	data-lanes = <0 1 2 3>;
+};
+
+&dsi0_phy {
+	status = "okay";
+
+	vdda-supply = <&pm8994_l2>;
+	vcca-supply = <&pm8994_l28>;
+};
+
+&dsi1 {
+	status = "disabled";
+};
+
+&dsi1_out {
+	status = "disabled";
+};
+
+&dsi1_phy {
+	status = "disabled";
+};
+
+&hdmi {
+	status = "disabled";
+};
+
+&hdmi_phy {
+	status = "disabled";
+};
+
+&mdp {
+	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
 /* Pins */
 &msmgpio {
 	usb_cable_sense_en_gpio: usb_cable_sense_en {

@@ -770,22 +770,7 @@
 			hdmi_phy: hdmi-phy@9a0600 {
 				#phy-cells = <0>;
 				compatible = "qcom,hdmi-phy-8996";
-				status = "disabled";fusb301@25 {
-		status = "okay";
-		compatible = "fusb301";
-		reg = <0x25>;
-		interrupt-parent = <&msm_gpio>;
-		interrupts = <107 IRQ_TYPE_EDGE_BOTH>,
-			     <131 IRQ_TYPE_EDGE_FALLING>;
-		fusb301,cbl_sns-enabled;
-		fusb301,cbl_sns-gpio = <&msm_gpio 116 0x00>;
-		fusb301,int-gpio = <&msm_gpio 131 0x00>;
-		fusb301,cbl_det-gpio = <&msm_gpio 107 0x00>;
-		fusb301,use-try-snk-emulation;
-		pinctrl-names = "default";
-		pinctrl-0 = <&usb_cable_det_n_gpio &usb_cable_sense_en_gpio
-			     &usb_cc_int_n_gpio>;
-	};
+				status = "disabled";
 				reg = <0x009a0600 0x1c4>,
 				      <0x009a0a00 0x124>,
 				      <0x009a0c00 0x124>,
