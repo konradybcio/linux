@@ -7,6 +7,7 @@
 #include <dt-bindings/clock/qcom,rpmcc.h>
 #include <dt-bindings/power/qcom-rpmpd.h>
 #include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interconnect/qcom,sdm660.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 
 / {
@@ -797,9 +798,36 @@
 			clock-names = "core";
 		};
 
+		bimc: interconnect@1000000 {
+			compatible = "qcom,sdm660-bimc";
+			reg = <0x01000000 0x80000>;
+			#interconnect-cells = <1>;
+			clock-names = "bus", "bus_a";
+			clocks = <&rpmcc RPM_SMD_BIMC_CLK>,
+				 <&rpmcc RPM_SMD_BIMC_A_CLK>;
+		};
+
 		restart@10ac000 {
 			compatible = "qcom,pshold";
 			reg = <0x010ac000 0x4>;
+		};
+
+		cnoc: interconnect@1500000 {
+			compatible = "qcom,sdm660-cnoc";
+			reg = <0x01500000 0x10000>;
+			#interconnect-cells = <1>;
+			clock-names = "bus", "bus_a";
+			clocks = <&rpmcc RPM_SMD_CNOC_CLK>,
+				 <&rpmcc RPM_SMD_CNOC_A_CLK>;
+		};
+
+		snoc: interconnect@1620000 {
+			compatible = "qcom,sdm660-snoc";
+			reg = <0x01620000 0x20000>;
+			#interconnect-cells = <1>;
+			clock-names = "bus", "bus_a";
+			clocks = <&rpmcc RPM_SMD_SNOC_CLK>,
+				 <&rpmcc RPM_SMD_SNOC_A_CLK>;
 		};
 
 		anoc2_smmu: iommu@16c0000 {
@@ -843,6 +871,41 @@
 				<GIC_SPI 474 IRQ_TYPE_LEVEL_HIGH>;
 
 			status = "disabled";
+		};
+
+		a2noc: interconnect@1700000 {
+			compatible = "qcom,sdm660-a2noc";
+			reg = <0x01700000 0x20000>;
+			#interconnect-cells = <1>;
+			clock-names = "bus", "bus_a";
+			clocks = <&rpmcc RPM_SMD_AGGR2_NOC_CLK>,
+				 <&rpmcc RPM_SMD_AGGR2_NOC_A_CLK>;
+		};
+
+		/*
+		 * Having two nodes at the same address with the
+		 * same name isn't something DTC agrees with..
+		 */
+		mnoc_ahb: interconnect_ahb@1740000 {
+			compatible = "qcom,sdm660-mnoc_ahb";
+			reg = <0x01740000 0x10000>;
+			#interconnect-cells = <1>;
+			clock-names = "bus", "bus_a";
+			/* 
+			 * This one needs MMCC driver..
+			 * clocks = <&mmcc AHB_CLK_SRC >,
+			 *     <&mmcc AHB_CLK_SRC>;
+			 */
+			clocks = <&xo_board>, <&xo_board>;
+		};
+
+		mnoc: interconnect@1740000 {
+			compatible = "qcom,sdm660-mnoc";
+			reg = <0x01740000 0x10000>;
+			#interconnect-cells = <1>;
+			clock-names = "bus", "bus_a";
+			clocks = <&rpmcc RPM_SMD_MMSSNOC_AXI_CLK>,
+				 <&rpmcc RPM_SMD_MMSSNOC_AXI_CLK_A>;
 		};
 
 		tsens: thermal-sensor@10ae000 {
@@ -1533,8 +1596,19 @@
 				<GIC_SPI 274 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 275 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 276 IRQ_TYPE_LEVEL_HIGH>;
-
 			status = "disabled";
+		};
+
+		gnoc: interconnect@17900000 {
+			compatible = "qcom,sdm660-gnoc";
+			reg = <0x17900000 0xe000>;
+			#interconnect-cells = <1>;
+			/*
+			 * This one apparently features no clocks,
+			 * so let's not mess with the driver needlessly
+			 */
+			clock-names = "bus", "bus_a";
+			clocks = <&xo_board>, <&xo_board>;
 		};
 
 		apcs_glb: mailbox@17911000 {
