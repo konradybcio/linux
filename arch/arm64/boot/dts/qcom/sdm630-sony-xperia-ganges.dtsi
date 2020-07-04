@@ -20,13 +20,23 @@
 	 * Until then, let's not make the kernel panic
 	 */
 	/delete-node/ gpio-keys;
-
-	/delete-node/ i2c;
 };
 
 &framebuffer0 {
 	reg = <0 0x9d400000 0 (2520 * 1080 * 4)>;
 	height = <2520>;
+};
+
+&i2c1_touch {
+	/delete-node/ synaptics-rmi4-i2c@70;
+
+	touchscreen: novatek@62 {
+		compatible = "novatek,NVT-ts";
+		reg = <0x62>;
+		status = "okay";
+
+		novatek,irq-gpio = <&tlmm 45 0x2002>;
+	};
 };
 
 &blsp_i2c1 {
