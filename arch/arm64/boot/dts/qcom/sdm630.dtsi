@@ -1598,6 +1598,11 @@
 				<GIC_SPI 274 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 275 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 276 IRQ_TYPE_LEVEL_HIGH>;
+
+			/*
+			 * This SMMU needs to be disabled until we
+			 * support multimedia subsystem and its clocks
+			 */
 			status = "disabled";
 		};
 
