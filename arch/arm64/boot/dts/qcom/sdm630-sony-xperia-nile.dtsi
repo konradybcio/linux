@@ -137,6 +137,15 @@
 			};
 		};
 	};
+
+	/* 
+	 * Until we hook up type-c detection, we
+	 * have to stick with this. But it works.
+	 */
+	extcon_usb: extcon-usb {
+		compatible = "linux,extcon-usb-gpio";
+		id-gpio = <&tlmm 58 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &blsp_i2c1 {
@@ -177,6 +186,14 @@
 	};
 };
 
+&qusb2phy {
+	status = "okay";
+};
+
+&remoteproc_mss {
+	firmware-name = "mba.mbn", "modem.mdt";
+};
+
 &sdhc_1 {
 	status = "okay";
 
@@ -213,4 +230,13 @@
 		drive-strength = <8>;
 		bias-disable;
 	};
+};
+
+&usb3 {
+	status = "okay";
+};
+
+&usb3_dwc3 {
+	dr_mode = "peripheral";
+	extcon = <&extcon_usb>;
 };
