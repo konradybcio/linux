@@ -834,6 +834,7 @@
 			compatible = "qcom,sdm630-smmu-v2", "qcom,smmu-v2";
 			reg = <0x016c0000 0x40000>;
 			#iommu-cells = <1>;
+			qcom,skip-init;
 
 			#global-interrupts = <2>;
 			interrupts =
@@ -869,8 +870,6 @@
 				<GIC_SPI 472 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 473 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 474 IRQ_TYPE_LEVEL_HIGH>;
-
-			status = "disabled";
 		};
 
 		a2noc: interconnect@1700000 {
@@ -1230,6 +1229,7 @@
 			compatible = "qcom,sdm630-smmu-v2", "qcom,smmu-v2";
 			reg = <0x05040000 0x10000>;
 			#iommu-cells = <1>;
+			qcom,skip-init;
 
 			#global-interrupts = <2>;
 			interrupts =
@@ -1244,14 +1244,13 @@
 				<GIC_SPI 117 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 349 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 350 IRQ_TYPE_LEVEL_HIGH>;
-
-			status = "disabled";
 		};
 
 		lpass_smmu: iommu@5100000 {
 			compatible = "qcom,sdm630-smmu-v2", "qcom,smmu-v2";
 			reg = <0x05100000 0x40000>;
 			#iommu-cells = <1>;
+			qcom,skip-init;
 
 			#global-interrupts = <2>;
 			interrupts =
@@ -1275,8 +1274,6 @@
 				<GIC_SPI 225 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 310 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 404 IRQ_TYPE_LEVEL_HIGH>;
-
-			status = "disabled";
 		};
 
 		spmi_bus: spmi@800f000 {
@@ -1568,6 +1565,7 @@
 			compatible = "qcom,sdm630-smmu-v2", "qcom,smmu-v2";
 			reg = <0x0cd00000 0x40000>;
 			#iommu-cells = <1>;
+			qcom,skip-init;
 
 			#global-interrupts = <2>;
 			interrupts =
