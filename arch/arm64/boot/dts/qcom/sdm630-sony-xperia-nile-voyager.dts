@@ -18,3 +18,7 @@
 		};
 	};
 };
+
+&mdss {
+	status = "disabled";
+};
