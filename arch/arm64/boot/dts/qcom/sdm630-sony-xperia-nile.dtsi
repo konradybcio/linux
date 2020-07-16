@@ -35,7 +35,18 @@
 			height = <1920>;
 			stride = <(1080 * 4)>;
 			format = "a8r8g8b8";
-			status= "okay";
+
+			power-domains = <&mmcc MDSS_GDSC>;
+			clocks = <&mmcc MDSS_AHB_CLK>,
+				 <&mmcc MNOC_AHB_CLK>,
+				 <&mmcc MDSS_VSYNC_CLK>,
+				 <&mmcc MDSS_AXI_CLK>,
+				 <&mmcc MDSS_BYTE0_INTF_CLK>,
+				 <&mmcc MDSS_MDP_CLK>,
+				 <&mmcc MDSS_BYTE0_CLK>,
+				 <&mmcc MDSS_PCLK0_CLK>,
+				 <&mmcc MDSS_ESC0_CLK>,
+				 <&xo_board>;
 		};
 	};
 
