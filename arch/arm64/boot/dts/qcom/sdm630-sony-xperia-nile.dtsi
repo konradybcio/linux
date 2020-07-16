@@ -20,7 +20,7 @@
 
 	/* This part enables graphical output via bootloader-enabled display */
 	chosen {
-		bootargs = "earlycon=tty0 console=tty0";
+		bootargs = "earlycon=tty0 console=tty0 clk_ignore_unused";
 
 		#address-cells = <2>;
 		#size-cells = <2>;
