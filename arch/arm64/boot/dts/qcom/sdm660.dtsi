@@ -488,6 +488,7 @@
 			compatible = "qcom,sdm660-smmu-v2", "qcom,smmu-v2";
 			reg = <0x016c0000 0x40000>;
 			#iommu-cells = <1>;
+			qcom,use-3-lvl-tables;
 			qcom,skip-init;
 
 			#global-interrupts = <2>;
@@ -880,6 +881,7 @@
 			compatible = "qcom,sdm660-smmu-v2", "qcom,smmu-v2";
 			reg = <0x05040000 0x10000>;
 			#iommu-cells = <1>;
+			qcom,use-3-lvl-tables;
 			qcom,skip-init;
 
 			interrupts =
@@ -894,6 +896,7 @@
 			compatible = "qcom,sdm660-smmu-v2", "qcom,smmu-v2";
 			reg = <0x05100000 0x40000>;
 			#iommu-cells = <1>;
+			qcom,use-3-lvl-tables;
 			qcom,skip-init;
 
 			#global-interrupts = <2>;
@@ -1428,6 +1431,7 @@
 			compatible = "qcom,sdm660-smmu-v2", "qcom,smmu-v2";
 			reg = <0x0cd00000 0x40000>;
 			#iommu-cells = <1>;
+			qcom,use-3-lvl-tables;
 			qcom,skip-init;
 			qcom,no-smr-check;
 
