@@ -1790,6 +1790,7 @@
 			reg = <0x0cd00000 0x40000>;
 			#iommu-cells = <1>;
 			qcom,skip-init;
+			qcom,no-smr-check;
 
 			#global-interrupts = <2>;
 			interrupts =
