@@ -5,16 +5,246 @@
 
 /dts-v1/;
 
-/* Mermaid uses sdm636, but it's different ever so slightly
- * that we can ignore it for the time being. Sony also commonizes
- * the Ganges platform as a whole in downstream kernels.
- */
-#include "sdm630-sony-xperia-ganges.dtsi"
+#include "sdm636.dtsi"
+#include "pm660.dtsi"
+#include "pm660l.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/input/gpio-keys.h>
 
 / {
 	model = "Sony Xperia 10 Plus";
 	compatible = "sony,mermaid-row", "qcom,sdm636";
 
 	qcom,msm-id = <345 0>;
+	qcom,board-id = <8 1>;
 	qcom,pmic-id = <0x1001b 0x101011a 0x00 0x00 0x1001b 0x201011a 0x00 0x00 0x1001b 0x102001a 0x00 0x00>;
+
+	/* This part enables graphical output via bootloader-enabled display */
+	chosen {
+		bootargs = "earlycon=tty0 console=tty0 clk_ignore_unused";
+
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		stdout-path = "framebuffer0";
+
+		framebuffer0: framebuffer@9d400000 {
+			compatible = "simple-framebuffer";
+			reg = <0 0x9d400000 0 (1920 * 1080 * 4)>;
+			width = <1080>;
+			height = <1920>;
+			stride = <(1080 * 4)>;
+			format = "a8r8g8b8";
+
+			power-domains = <&mmcc MDSS_GDSC>;
+			clocks = <&mmcc MDSS_AHB_CLK>,
+				 <&mmcc MNOC_AHB_CLK>,
+				 <&mmcc MDSS_VSYNC_CLK>,
+				 <&mmcc MDSS_AXI_CLK>,
+				 <&mmcc MDSS_BYTE0_INTF_CLK>,
+				 <&mmcc MDSS_MDP_CLK>,
+				 <&mmcc MDSS_BYTE0_CLK>,
+				 <&mmcc MDSS_PCLK0_CLK>,
+				 <&mmcc MDSS_ESC0_CLK>,
+				 <&xo_board>;
+		};
+	};
+
+	i2c1_touch: i2c {
+		compatible = "i2c-gpio";
+		status = "okay";
+
+		sda-gpios = <&tlmm 2 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+		scl-gpios = <&tlmm 3 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clock-frequency = <400000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&i2c1_default>;
+
+		touchscreen: novatek@62 {
+			compatible = "novatek,NVT-ts";
+			reg = <0x62>;
+			status = "okay";
+
+			novatek,irq-gpio = <&tlmm 45 0x2002>;
+		};
+	};
+
+	/*
+	 * Until we hook up type-c detection, we
+	 * have to stick with this. But it works.
+	 */
+	extcon_usb: extcon-usb {
+		compatible = "linux,extcon-usb-gpio";
+		id-gpio = <&tlmm 58 GPIO_ACTIVE_HIGH>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		ramoops@ffc00000 {
+			compatible = "ramoops";
+			reg = <0x0 0xffc00000 0x0 0x100000>;
+			record-size = <0x10000>;
+			console-size = <0x60000>;
+			ftrace-size = <0x10000>;
+			pmsg-size = <0x20000>;
+			ecc-size = <16>;
+			status = "okay";
+		};
+
+		debug_region@ffb00000 {
+			reg = <0x00 0xffb00000 0x00 0x100000>;
+			no-map;
+		};
+
+		removed_region@85800000 {
+			reg = <0x00 0x85800000 0x00 0x3700000>;
+			no-map;
+		};
+	};
+};
+
+&blsp_i2c1 {
+	status = "okay";
+
+	/* Novatek touchscreen - see the note in -nile. dtsi */
+};
+
+&blsp_i2c2 {
+	status = "okay";
+
+	/* SMB1351 charger */
+};
+
+/* I2C3, 4, 5, 7 and 8 are disabled on this board. */
+
+&blsp_i2c6 {
+	status = "okay";
+
+	/* NXP NFC */
+};
+
+&blsp1_uart2 {
+	status = "okay";
+};
+
+&blsp2_uart1 {
+	status = "okay";
+};
+
+&dsi0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	panel: panel@0 {
+		reg = <0>;
+
+		reset-gpios = <&tlmm 53 GPIO_ACTIVE_HIGH>;
+		disp-te-gpios = <&tlmm 59 GPIO_ACTIVE_HIGH>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&panel_reset_gpio &panel_te_gpio>;
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi0_out>;
+			};
+		};
+	};
+};
+
+&dsi0_out {
+	remote-endpoint = <&panel_in>;
+	data-lanes = <0 1 2 3>;
+};
+
+&mdss {
+	//status = "okay";
+};
+
+&pon {
+	volup {
+		compatible = "qcom,pm8941-resin";
+		interrupts = <0x0 0x8 1 IRQ_TYPE_EDGE_BOTH>;
+		debounce = <15625>;
+		bias-pull-up;
+		linux,code = <KEY_VOLUMEUP>;
+	};
+};
+
+&qusb2phy {
+	status = "okay";
+};
+
+&remoteproc_mss {
+	firmware-name = "mba.mbn", "modem.mdt";
+};
+
+&sdhc_1 {
+	status = "okay";
+
+	mmc-ddr-1_8v;
+	/* SoMC Ganges platform's eMMC doesn't support HS200 mode */
+	mmc-hs400-1_8v;
+};
+
+&sdhc_2 {
+	status = "okay";
+};
+
+&tlmm {
+	gpio-reserved-ranges = <8 4>;
+
+	ts_int_active: ts-int-active {
+		pins = "gpio45";
+		drive-strength = <8>;
+		bias-pull-up;
+	};
+
+	ts_lcd_id_active: ts-lcd-id-active {
+		pins = "gpio56";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	panel_reset_gpio: panel-reset-gpio {
+		pins = "gpio53";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	mdss_dsi_suspend: mdss-dsi-suspend {
+		pins = "gpio53";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	panel_te_gpio: panel-te-gpio {
+		pins = "gpio59";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	sdc2-clk-on {
+		drive-strength = <14>;
+	};
+};
+
+&usb3 {
+	status = "okay";
+};
+
+&usb3_dwc3 {
+	dr_mode = "peripheral";
+	extcon = <&extcon_usb>;
 };
