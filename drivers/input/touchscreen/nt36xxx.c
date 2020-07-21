@@ -801,6 +801,60 @@ static int nvt_ts_remove(struct i2c_client *client)
 	return 0;
 }
 
+static int __maybe_unused nvt_ts_suspend(struct device *dev)
+{
+	struct nvt_i2c *nvt_i2c = i2c_get_clientdata(to_i2c_client(dev));
+	uint8_t buf[4] = { 0 };
+	int i;
+
+	mutex_lock(&nvt_i2c->lock);
+
+	disable_irq(nvt_i2c->client->irq);
+
+	/* Write i2c command to enter "deep sleep mode" */
+	buf[0] = EVENT_MAP_HOST_CMD;
+	buf[1] = 0x11;
+	nvt_i2c_write(nvt_i2c->client, I2C_FW_Address, buf, 2);
+
+	/* Release all touches */
+	for (i = 0; i < nvt_i2c->max_touch_num; i++) {
+		input_mt_slot(nvt_i2c->input, i);
+		input_report_abs(nvt_i2c->input, ABS_MT_TOUCH_MAJOR, 0);
+		input_report_abs(nvt_i2c->input, ABS_MT_PRESSURE, 0);
+		input_mt_report_slot_state(nvt_i2c->input, MT_TOOL_FINGER, 0);
+	}
+
+	input_sync(nvt_i2c->input);
+
+	msleep(50);
+
+	mutex_unlock(&nvt_i2c->lock);
+
+	return 0;
+}
+
+static int __maybe_unused nvt_ts_resume(struct device *dev)
+{
+	struct nvt_i2c *nvt_i2c = i2c_get_clientdata(to_i2c_client(dev));
+
+	mutex_lock(&nvt_i2c->lock);
+
+	if (gpio_is_valid(nvt_i2c->reset_gpio)) {
+		gpio_set_value(nvt_i2c->reset_gpio, 1);
+	}
+
+	nvt_bootloader_reset(nvt_i2c);
+	nvt_check_fw_reset_state(nvt_i2c, RESET_STATE_REK);
+
+	enable_irq(nvt_i2c->client->irq);
+
+	mutex_unlock(&nvt_i2c->lock);
+
+	return 0;
+}
+
+static SIMPLE_DEV_PM_OPS(nvt_ts_pm, nvt_ts_suspend, nvt_ts_resume);
+
 #ifdef CONFIG_OF
 static const struct of_device_id nvt_match_table[] = {
 	{ .compatible = "novatek,NVT-ts" },
@@ -819,6 +873,7 @@ static struct i2c_driver nvt_ts_driver = {
 	.driver = {
 		.name	= NVT_I2C_NAME,
 		.of_match_table = of_match_ptr(nvt_match_table),
+		.pm	= &nvt_ts_pm,
 	},
 	.probe		= nvt_ts_probe,
 	.remove		= nvt_ts_remove,
