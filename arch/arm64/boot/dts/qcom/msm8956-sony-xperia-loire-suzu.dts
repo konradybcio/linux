@@ -8,8 +8,8 @@
 #include "msm8956-sony-xperia-loire.dtsi"
 
 / {
-	model = "SoMC Loire Suzu-ROW";
-	compatible = "somc,suzu-row", "qcom,msm8956";
+	model = "Sony Xperia X (Codename Suzu)";
+	compatible = "sony,xperia-suzu", "qcom,msm8956";
 
 	qcom,board-id = <8 0>;
 };
@@ -19,11 +19,11 @@
 };
 
 &usb_hs_phy {
-	qcom,init-seq = /bits/ 8 <0x0 0x74 0x1 0x6f 0x2 0x3f 0x3 0x33>;
+	compatible = "qcom,msm8956-suzu-usb-hsphy";
 };
 
 &dsi0 {
-	lgd_panel0: panel@0 {
+	lgd_panel0: lgd-panel@0 {
 		compatible = "lgd,syn-incell-fhd-ips-lcd";
 		reg = <0>;
 		status = "okay";
@@ -33,7 +33,7 @@
 		avdd-supply = <&pm8950_l23>; /* 1.2V */
 		// No tvdd for full in-cell.
 		// tvdd-supply = <&pm8950_l22>; /* 3.0V */
-		tvddio-supply = <&panel_tvdd>;
+		tvddio-supply = <&tp_vddio_vreg>;
 		// No pvddio-supply for the Suzu panel (Dora has it though).
 
 		preset-gpio = <&msm_gpio 25 0>;
