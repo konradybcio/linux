@@ -254,7 +254,7 @@
 
 	regulator-always-on;
 
-	power-domains = <&rpmpd MSM8956_VDDCX_AO>, <&rpmpd MSM8956_VDDCX_AO>;
+	power-domains = <&rpmpd MSM8976_VDDCX_AO>, <&rpmpd MSM8976_VDDCX_AO>;
 	power-domain-names = "mx", "cx";
 	qcom,mx-corner-map = <RPM_SMD_LEVEL_SVS>,
 				 <RPM_SMD_LEVEL_SVS>,
