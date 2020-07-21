@@ -430,7 +430,7 @@ config DRM_PANEL_SOMC_JDI_SYN_H455TAX01
 	  per pixel.
 	  It provides a single MIPI DSI interface to the host.
 
-+config DRM_PANEL_SOMC_JDI_SYN_SUZU
+config DRM_PANEL_SOMC_JDI_SYN_SUZU
 	tristate "JDI and Synaptics In-Cell XXX command mode panel"
 	depends on OF
 	depends on DRM_MIPI_DSI

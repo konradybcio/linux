@@ -13,16 +13,19 @@
 */
 
 #include <linux/backlight.h>
+#include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>
+#include <linux/of_device.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_panel.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_mipi_dsi.h>
-#include <drm/drm_panel.h>
 
 #include <video/display_timing.h>
 #include <video/videomode.h>
@@ -359,13 +362,13 @@ static const struct drm_display_mode default_mode = {
 	//.flags = 0,
 };
 
-static int h455tax01_panel_get_modes(struct drm_panel *panel)
+static int h455tax01_panel_get_modes(struct drm_panel *panel, struct drm_connector *connector)
 {
 	struct drm_display_mode *mode;
 	struct h455tax01_panel *h455tax01_panel = to_h455tax01(panel);
 	struct device *dev = &h455tax01_panel->dsi->dev;
 
-	mode = drm_mode_duplicate(panel->drm, &default_mode);
+	mode = drm_mode_duplicate(connector->dev, &default_mode);
 	if (!mode) {
 		dev_err(dev, "failed to add mode %ux%ux@%u\n",
 			default_mode.hdisplay, default_mode.vdisplay,
@@ -375,10 +378,10 @@ static int h455tax01_panel_get_modes(struct drm_panel *panel)
 
 	drm_mode_set_name(mode);
 
-	drm_mode_probed_add(panel->connector, mode);
+	drm_mode_probed_add(connector, mode);
 
-	panel->connector->display_info.width_mm = 56;
-	panel->connector->display_info.height_mm = 100;
+	connector->display_info.width_mm = 56;
+	connector->display_info.height_mm = 100;
 
 	return 1;
 }
@@ -448,10 +451,8 @@ static int h455tax01_panel_add(struct h455tax01_panel *h455tax01_panel)
 		h455tax01_panel->ts_reset_gpio = NULL;
 	}
 
-	drm_panel_init(&h455tax01_panel->base);
-	h455tax01_panel->base.funcs = &h455tax01_panel_funcs;
-	h455tax01_panel->base.dev = dev;
-
+	drm_panel_init(&h455tax01_panel->base, &h455tax01_panel->dsi->dev,
+				&h455tax01_panel_funcs, DRM_MODE_CONNECTOR_DSI);
 	rc = drm_panel_add(&h455tax01_panel->base);
 	if (rc < 0)
 		pr_err("drm panel add failed\n");

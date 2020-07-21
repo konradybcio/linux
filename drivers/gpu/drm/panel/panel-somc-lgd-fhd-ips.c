@@ -13,16 +13,19 @@
 */
 
 #include <linux/backlight.h>
+#include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/module.h>
+#include <linux/of_device.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_panel.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_mipi_dsi.h>
-#include <drm/drm_panel.h>
 
 #include <video/display_timing.h>
 #include <video/videomode.h>
@@ -303,13 +306,13 @@ static const struct drm_display_mode default_mode = {
 	//.flags = 0,
 };
 
-static int lgd_fhd_ips_panel_get_modes(struct drm_panel *panel)
+static int lgd_fhd_ips_panel_get_modes(struct drm_panel *panel, struct drm_connector *connector)
 {
 	struct drm_display_mode *mode;
 	struct lgd_fhd_ips_panel *lgd_panel = to_lgd_fhd_ips(panel);
 	struct device *dev = &lgd_panel->dsi->dev;
 
-	mode = drm_mode_duplicate(panel->drm, &default_mode);
+	mode = drm_mode_duplicate(connector->dev, &default_mode);
 	if (!mode) {
 		dev_err(dev, "failed to add mode %ux%ux@%u\n",
 			default_mode.hdisplay, default_mode.vdisplay,
@@ -319,10 +322,10 @@ static int lgd_fhd_ips_panel_get_modes(struct drm_panel *panel)
 
 	drm_mode_set_name(mode);
 
-	drm_mode_probed_add(panel->connector, mode);
+	drm_mode_probed_add(connector, mode);
 
-	panel->connector->display_info.width_mm = 61;
-	panel->connector->display_info.height_mm = 110;
+	connector->display_info.width_mm = 61;
+	connector->display_info.height_mm = 110;
 
 	return 1;
 }
@@ -392,7 +395,8 @@ static int lgd_fhd_ips_panel_add(struct lgd_fhd_ips_panel *lgd_panel)
 		lgd_panel->ts_reset_gpio = NULL;
 	}
 
-	drm_panel_init(&lgd_panel->base);
+	drm_panel_init(&lgd_panel->base, &lgd_panel->dsi->dev,
+		&lgd_fhd_ips_panel_funcs, DRM_MODE_CONNECTOR_DSI);
 	lgd_panel->base.funcs = &lgd_fhd_ips_panel_funcs;
 	lgd_panel->base.dev = dev;
 
