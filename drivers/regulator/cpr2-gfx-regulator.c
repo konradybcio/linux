@@ -1607,7 +1607,7 @@ static int cpr_mem_acc_init(struct cpr2_gfx_regulator *cpr_vreg)
 	if (of_find_property(dev->of_node, "mem-acc-supply", NULL)) {
 		cpr_vreg->mem_acc_vreg = devm_regulator_get(dev, "mem-acc");
 		if (IS_ERR_OR_NULL(cpr_vreg->mem_acc_vreg)) {
-			rc = PTR_RET(cpr_vreg->mem_acc_vreg);
+			rc = PTR_ERR(cpr_vreg->mem_acc_vreg);
 			if (rc != -EPROBE_DEFER)
 				cpr_err(cpr_vreg,
 					"devm_regulator_get: mem-acc: rc=%d\n",
@@ -2050,7 +2050,7 @@ static int cpr_gfx_init(struct cpr2_gfx_regulator *cpr_vreg)
 	int rc = 0;
 
 	cpr_vreg->vdd_gfx = devm_regulator_get(cpr_vreg->dev, "vdd-gfx");
-	rc = PTR_RET(cpr_vreg->vdd_gfx);
+	rc = PTR_ERR(cpr_vreg->vdd_gfx);
 	if (rc) {
 		if (rc != -EPROBE_DEFER)
 			cpr_err(cpr_vreg, "devm_regulator_get: rc=%d\n", rc);
@@ -2086,7 +2086,7 @@ static int cpr_get_clock_handles(struct cpr2_gfx_regulator *cpr_vreg)
 
 	cpr_vreg->core_clk = devm_clk_get(cpr_vreg->dev, "core_clk");
 	if (IS_ERR(cpr_vreg->core_clk)) {
-		rc = PTR_RET(cpr_vreg->core_clk);
+		rc = PTR_ERR(cpr_vreg->core_clk);
 		if (rc != -EPROBE_DEFER)
 			cpr_err(cpr_vreg, "unable to request core clock, rc=%d\n",
 				rc);
@@ -2095,7 +2095,7 @@ static int cpr_get_clock_handles(struct cpr2_gfx_regulator *cpr_vreg)
 
 	cpr_vreg->iface_clk = devm_clk_get(cpr_vreg->dev, "iface_clk");
 	if (IS_ERR(cpr_vreg->iface_clk)) {
-		rc = PTR_RET(cpr_vreg->iface_clk);
+		rc = PTR_ERR(cpr_vreg->iface_clk);
 		if (rc != -EPROBE_DEFER)
 			cpr_err(cpr_vreg, "unable to request interface clock, rc=%d\n",
 				rc);
