@@ -44,6 +44,7 @@ obj-$(CONFIG_DRM_PANEL_SITRONIX_ST7701) += panel-sitronix-st7701.o
 obj-$(CONFIG_DRM_PANEL_SITRONIX_ST7789V) += panel-sitronix-st7789v.o
 obj-$(CONFIG_DRM_PANEL_SOMC_JDI_SYN_H455TAX01) += panel-somc-jdi-syn-h455tax01.o
 # TODO: WHAT IS THE PANEL MODEL???
+obj-$(CONFIG_DRM_PANEL_SOMC_AUO_FHD_IPS) += panel-somc-auo-fhd-ips.o
 obj-$(CONFIG_DRM_PANEL_SOMC_LGD_FHD_IPS) += panel-somc-lgd-fhd-ips.o
 obj-$(CONFIG_DRM_PANEL_SONY_ACX424AKP) += panel-sony-acx424akp.o
 obj-$(CONFIG_DRM_PANEL_SONY_ACX565AKM) += panel-sony-acx565akm.o
