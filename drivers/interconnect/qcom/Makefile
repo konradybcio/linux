@@ -2,6 +2,7 @@
 
 icc-bcm-voter-objs			:= bcm-voter.o
 qnoc-msm8916-objs			:= msm8916.o
+qnoc-msm8956-objs			:= msm8956.o
 qnoc-msm8974-objs			:= msm8974.o
 icc-osm-l3-objs				:= osm-l3.o
 qnoc-qcs404-objs			:= qcs404.o
