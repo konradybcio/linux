@@ -15,6 +15,11 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		pm660l_pbs: pbs@7300 {
+			compatible = "qcom,qpnp-pbs";
+			reg = <0x7300 0x100>;
+		};
+
 		pm660l_gpios: gpios@c000 {
 			compatible = "qcom,pm660l-gpio", "qcom,spmi-gpio";
 			reg = <0xc000>;
@@ -47,6 +52,86 @@
 			qcom,enabled-strings = <0 1>;
 
 			status = "disabled";
+		};
+
+		pm660l_lpg: pwm@b100 {
+			compatible = "qcom,pwm-lpg";
+			reg = <0xb100 0x200>, <0xb042 0x7e>;
+			reg-names = "lpg-base", "lut-base";
+			#pwm-cells = <2>;
+			qcom,pbs-client = <&pm660l_pbs>;
+			qcom,num-lpg-channels = <4>;
+			qcom,lut-patterns = <0 10 20 30 40 50 60 70 80 90 100
+						90 80 70 60 50 40 30 20 10 0>;
+
+			lpg1 {
+				qcom,lpg-chan-id = <1>;
+				qcom,ramp-step-ms = <100>;
+				qcom,ramp-pause-hi-count = <2>;
+				qcom,ramp-pause-lo-count = <2>;
+				qcom,ramp-low-index = <0>;
+				qcom,ramp-high-index = <20>;
+				qcom,ramp-from-low-to-high;
+				qcom,ramp-pattern-repeat;
+			};
+
+			lpg2 {
+				qcom,lpg-chan-id = <2>;
+				qcom,ramp-step-ms = <100>;
+				qcom,ramp-pause-hi-count = <2>;
+				qcom,ramp-pause-lo-count = <2>;
+				qcom,ramp-low-index = <0>;
+				qcom,ramp-high-index = <20>;
+				qcom,ramp-from-low-to-high;
+				qcom,ramp-pattern-repeat;
+			};
+
+			lpg3 {
+				qcom,lpg-chan-id = <3>;
+				qcom,ramp-step-ms = <100>;
+				qcom,ramp-pause-hi-count = <2>;
+				qcom,ramp-pause-lo-count = <2>;
+				qcom,ramp-low-index = <0>;
+				qcom,ramp-high-index = <20>;
+				qcom,ramp-from-low-to-high;
+				qcom,ramp-pattern-repeat;
+			};
+
+			lpg4 {
+				qcom,lpg-chan-id = <4>;
+				qcom,ramp-step-ms = <100>;
+				qcom,ramp-pause-hi-count = <2>;
+				qcom,ramp-pause-lo-count = <2>;
+				qcom,ramp-low-index = <0>;
+				qcom,ramp-high-index = <20>;
+			};
+		};
+
+		pm660l_triled: leds@d000 {
+			compatible = "qcom,tri-led";
+			reg = <0xd000 0x100>;
+			label = "rgb";
+
+			red {
+				label = "red";
+				pwms = <&pm660l_lpg 2 1000000>;
+				led-sources = <0>;
+				linux,default-trigger = "timer";
+			};
+			
+			green {
+				label = "green";
+				pwms = <&pm660l_lpg 1 1000000>;
+				led-sources = <1>;
+				linux,default-trigger = "timer";
+			};
+
+			blue {
+				label = "blue";
+				pwms = <&pm660l_lpg 0 1000000>;
+				led-sources = <2>;
+				linux,default-trigger = "timer";
+			};
 		};
 	};
 };
