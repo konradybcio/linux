@@ -551,6 +551,17 @@ config LEDS_PWM
 	help
 	  This option enables support for pwm driven LEDs
 
+config LEDS_QPNP_FLASH_V2
+	tristate "Support for QPNP V2 Flash LEDs"
+	depends on LEDS_CLASS && MFD_SPMI_PMIC
+	select LEDS_TRIGGERS
+	help
+	  This driver supports the flash V2 LED functionality of Qualcomm
+	  Technologies, Inc. QPNP PMICs.  This driver supports PMICs starting
+	  from PMI8998.  It can configure the flash LED target current for
+	  several independent channels.  It also supports various over current
+	  and over temperature mitigation features.
+
 config LEDS_REGULATOR
 	tristate "REGULATOR driven LED support"
 	depends on LEDS_CLASS
