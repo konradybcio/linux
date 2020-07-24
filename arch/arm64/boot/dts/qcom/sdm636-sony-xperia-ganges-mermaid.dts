@@ -52,6 +52,24 @@
 		};
 	};
 
+	gpio_keys: gpio_keys {
+		status = "okay";
+		compatible = "gpio-keys";
+		input-name = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		autorepeat;
+
+		vol_down {
+			label = "Volume Down";
+			gpios = <&pm660l_gpios 7 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			linux,code = <KEY_VOLUMEDOWN>;
+			wakeup-source;
+			debounce-interval = <15>;
+		};
+	};
+
 	i2c1_touch: i2c {
 		compatible = "i2c-gpio";
 		status = "okay";

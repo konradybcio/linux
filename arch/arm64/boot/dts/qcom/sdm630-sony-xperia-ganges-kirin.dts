@@ -14,8 +14,6 @@
 / {
 	model = "Sony Xperia 10";
 	compatible = "sony,kirin-row", "qcom,sdm630";
-
-	/delete-node/ gpio-keys;
 };
 
 &blsp_i2c1 {
@@ -27,6 +25,11 @@
 &framebuffer0 {
 	reg = <0 0x9d400000 0 (2520 * 1080 * 4)>;
 	height = <2520>;
+};
+
+&gpio_keys {
+	/delete-node/ camera_focus;
+	/delete-node/ camera_snapshot;
 };
 
 &i2c1_touch {
