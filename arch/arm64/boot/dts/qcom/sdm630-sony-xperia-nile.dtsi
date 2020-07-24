@@ -159,6 +159,10 @@
 	};
 };
 
+&adsp_pil {
+	firmware-name = "adsp.mdt";
+};
+
 &blsp_i2c1 {
 	status = "okay";
 
@@ -223,6 +227,16 @@
 		debounce = <15625>;
 		bias-pull-up;
 		linux,code = <KEY_VOLUMEUP>;
+	};
+};
+
+&q6asmdai {
+	dai@0 {
+		reg = <0>;
+	};
+
+	dai@1 {
+		reg = <1>;
 	};
 };
 
