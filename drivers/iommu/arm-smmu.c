@@ -739,6 +739,8 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 		oas = smmu->ipa_size;
 		if (cfg->fmt == ARM_SMMU_CTX_FMT_AARCH64) {
 			fmt = ARM_64_LPAE_S1;
+			if (of_find_property(smmu->dev->of_node, "qcom,use-3-lvl-tables", NULL))
+				ias = min(ias, 39UL);
 		} else if (cfg->fmt == ARM_SMMU_CTX_FMT_AARCH32_L) {
 			fmt = ARM_32_LPAE_S1;
 			ias = min(ias, 32UL);
@@ -968,8 +970,15 @@ static void arm_smmu_test_smr_masks(struct arm_smmu_device *smmu)
 	u32 smr;
 	int i;
 
-	if (!smmu->smrs)
+	if (!smmu->smrs && !(of_find_property(smmu->dev->of_node, "qcom,no-smr-check", NULL)))
 		return;
+
+	if (of_find_property(smmu->dev->of_node, "qcom,no-smr-check", NULL)) {
+		smmu->streamid_mask = 0x7FFF;
+		smmu->smr_mask_mask = 0x7FFF;
+		return;
+	}
+
 	/*
 	 * If we've had to accommodate firmware memory regions, we may
 	 * have live SMRs by now; tread carefully...
@@ -1663,13 +1672,16 @@ static void arm_smmu_device_reset(struct arm_smmu_device *smmu)
 	 * Reset stream mapping groups: Initial values mark all SMRn as
 	 * invalid and all S2CRn as bypass unless overridden.
 	 */
-	for (i = 0; i < smmu->num_mapping_groups; ++i)
-		arm_smmu_write_sme(smmu, i);
 
-	/* Make sure all context banks are disabled and clear CB_FSR  */
-	for (i = 0; i < smmu->num_context_banks; ++i) {
-		arm_smmu_write_context_bank(smmu, i);
-		arm_smmu_cb_write(smmu, i, ARM_SMMU_CB_FSR, ARM_SMMU_FSR_FAULT);
+	if (!of_find_property(smmu->dev->of_node, "qcom,skip-init", NULL)) {
+		for (i = 0; i < smmu->num_mapping_groups; ++i)
+			arm_smmu_write_sme(smmu, i);
+
+		/* Make sure all context banks are disabled and clear CB_FSR  */
+		for (i = 0; i < smmu->num_context_banks; ++i) {
+			arm_smmu_write_context_bank(smmu, i);
+			arm_smmu_cb_write(smmu, i, ARM_SMMU_CB_FSR, ARM_SMMU_FSR_FAULT);
+		}
 	}
 
 	/* Invalidate the TLB, just in case */

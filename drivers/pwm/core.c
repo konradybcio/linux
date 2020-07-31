@@ -511,12 +511,12 @@ static void pwm_apply_state_debug(struct pwm_device *pwm,
 	    last->period > s2.period &&
 	    last->period <= state->period)
 		dev_warn(chip->dev,
-			 ".apply didn't pick the best available period (requested: %u, applied: %u, possible: %u)\n",
+			 ".apply didn't pick the best available period (requested: %llu, applied: %llu, possible: %llu)\n",
 			 state->period, s2.period, last->period);
 
 	if (state->enabled && state->period < s2.period)
 		dev_warn(chip->dev,
-			 ".apply is supposed to round down period (requested: %u, applied: %u)\n",
+			 ".apply is supposed to round down period (requested: %llu, applied: %llu)\n",
 			 state->period, s2.period);
 
 	if (state->enabled &&
@@ -525,14 +525,14 @@ static void pwm_apply_state_debug(struct pwm_device *pwm,
 	    last->duty_cycle > s2.duty_cycle &&
 	    last->duty_cycle <= state->duty_cycle)
 		dev_warn(chip->dev,
-			 ".apply didn't pick the best available duty cycle (requested: %u/%u, applied: %u/%u, possible: %u/%u)\n",
+			 ".apply didn't pick the best available duty cycle (requested: %llu/%llu, applied: %llu/%llu, possible: %llu/%llu)\n",
 			 state->duty_cycle, state->period,
 			 s2.duty_cycle, s2.period,
 			 last->duty_cycle, last->period);
 
 	if (state->enabled && state->duty_cycle < s2.duty_cycle)
 		dev_warn(chip->dev,
-			 ".apply is supposed to round down duty_cycle (requested: %u/%u, applied: %u/%u)\n",
+			 ".apply is supposed to round down duty_cycle (requested: %llu/%llu, applied: %llu/%llu)\n",
 			 state->duty_cycle, state->period,
 			 s2.duty_cycle, s2.period);
 
@@ -559,7 +559,7 @@ static void pwm_apply_state_debug(struct pwm_device *pwm,
 	    (s1.enabled && s1.period != last->period) ||
 	    (s1.enabled && s1.duty_cycle != last->duty_cycle)) {
 		dev_err(chip->dev,
-			".apply is not idempotent (ena=%d pol=%d %u/%u) -> (ena=%d pol=%d %u/%u)\n",
+			".apply is not idempotent (ena=%d pol=%d %llu/%llu) -> (ena=%d pol=%d %llu/%llu)\n",
 			s1.enabled, s1.polarity, s1.duty_cycle, s1.period,
 			last->enabled, last->polarity, last->duty_cycle,
 			last->period);
@@ -628,11 +628,46 @@ int pwm_apply_state(struct pwm_device *pwm, const struct pwm_state *state)
 			pwm->state.polarity = state->polarity;
 		}
 
+		if (state->output_type != pwm->state.output_type) {
+			if (!pwm->chip->ops->set_output_type)
+				return -ENOTSUPP;
+
+			err = pwm->chip->ops->set_output_type(pwm->chip, pwm,
+										state->output_type);
+			if (err)
+				return err;
+
+			pwm->state.output_type = state->output_type;
+		}
+
+		if (state->output_pattern != pwm->state.output_pattern &&
+						state->output_pattern != NULL) {
+			if (!pwm->chip->ops->set_output_pattern)
+				return -ENOTSUPP;
+
+			err = pwm->chip->ops->set_output_pattern(pwm->chip,
+								pwm, state->output_pattern);
+			if (err)
+				return err;
+
+			pwm->state.output_pattern = state->output_pattern;
+		}
+
 		if (state->period != pwm->state.period ||
 		    state->duty_cycle != pwm->state.duty_cycle) {
-			err = chip->ops->config(pwm->chip, pwm,
-						state->duty_cycle,
-						state->period);
+			if (pwm->chip->ops->config_extend) {
+					err = pwm->chip->ops->config_extend(pwm->chip,
+								pwm, state->duty_cycle,
+								state->period);
+			} else {
+				if (state->period > UINT_MAX)
+					pr_warn("period %llu duty_cycle %llu will be truncated\n",
+								state->period,
+								state->duty_cycle);
+				err = pwm->chip->ops->config(pwm->chip, pwm,
+								state->duty_cycle,
+								state->period);
+			}
 			if (err)
 				return err;
 
@@ -1285,8 +1320,8 @@ static void pwm_dbg_show(struct pwm_chip *chip, struct seq_file *s)
 		if (state.enabled)
 			seq_puts(s, " enabled");
 
-		seq_printf(s, " period: %u ns", state.period);
-		seq_printf(s, " duty: %u ns", state.duty_cycle);
+		seq_printf(s, " period: %llu ns", state.period);
+		seq_printf(s, " duty: %llu ns", state.duty_cycle);
 		seq_printf(s, " polarity: %s",
 			   state.polarity ? "inverse" : "normal");
 

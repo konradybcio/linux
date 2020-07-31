@@ -1,0 +1,17 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2020, Konrad Dybcio
+ */
+
+#include "sdm660.dtsi"
+
+/ {
+	/* According to the downstream DTS,
+	 * 636 is basically a 660 except for
+	 * CPU frequency difference, Adreno
+	 * 509 instead of 512 and lack of
+	 * turing IP. These differences will
+	 * be addressed when the aforementioned
+	 * peripherals will be enabled upstream.
+	 */
+};

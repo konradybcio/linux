@@ -1,0 +1,251 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright (c) 2020, Konrad Dybcio
+ */
+
+#include <dt-bindings/input/linux-event-codes.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/spmi/spmi.h>
+
+&spmi_bus {
+
+	pmic@2 {
+		compatible = "qcom,pm660l", "qcom,spmi-pmic";
+		reg = <0x2 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pm660l_revid: revid@100 {
+			compatible = "qcom,qpnp-revid";
+			reg = <0x100 0x100>;
+		};
+
+		pm660l_pbs: pbs@7300 {
+			compatible = "qcom,qpnp-pbs";
+			reg = <0x7300 0x100>;
+		};
+
+		pm660l_gpios: gpios@c000 {
+			compatible = "qcom,pm660l-gpio", "qcom,spmi-gpio";
+			reg = <0xc000>;
+			gpio-controller;
+			gpio-ranges = <&pm660l_gpios 0 0 12>;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+		};
+	};
+
+	pmic@3 {
+		compatible = "qcom,pm660l", "qcom,spmi-pmic";
+		reg = <0x3 SPMI_USID>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pm660l_wled: leds@d800 {
+			compatible = "qcom,pm660l-wled";
+			reg = <0xd800 0xd900>;
+			interrupts = <0x3 0xd8 0x1 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "ovp";
+			label = "backlight";
+
+			qcom,switching-freq = <800>;
+			qcom,ovp-millivolt = <29600>;
+			qcom,current-boost-limit = <970>;
+			qcom,current-limit-microamp = <20000>;
+			qcom,num-strings = <2>;
+			qcom,enabled-strings = <0 1>;
+
+			status = "disabled";
+		};
+
+		pm660l_lpg: pwm@b100 {
+			compatible = "qcom,pwm-lpg";
+			reg = <0xb100 0x200>, <0xb042 0x7e>;
+			reg-names = "lpg-base", "lut-base";
+			#pwm-cells = <2>;
+			qcom,pbs-client = <&pm660l_pbs>;
+			qcom,num-lpg-channels = <4>;
+			qcom,lut-patterns = <0 10 20 30 40 50 60 70 80 90 100
+						90 80 70 60 50 40 30 20 10 0>;
+
+			lpg1 {
+				qcom,lpg-chan-id = <1>;
+				qcom,ramp-step-ms = <100>;
+				qcom,ramp-pause-hi-count = <2>;
+				qcom,ramp-pause-lo-count = <2>;
+				qcom,ramp-low-index = <0>;
+				qcom,ramp-high-index = <20>;
+				qcom,ramp-from-low-to-high;
+				qcom,ramp-pattern-repeat;
+			};
+
+			lpg2 {
+				qcom,lpg-chan-id = <2>;
+				qcom,ramp-step-ms = <100>;
+				qcom,ramp-pause-hi-count = <2>;
+				qcom,ramp-pause-lo-count = <2>;
+				qcom,ramp-low-index = <0>;
+				qcom,ramp-high-index = <20>;
+				qcom,ramp-from-low-to-high;
+				qcom,ramp-pattern-repeat;
+			};
+
+			lpg3 {
+				qcom,lpg-chan-id = <3>;
+				qcom,ramp-step-ms = <100>;
+				qcom,ramp-pause-hi-count = <2>;
+				qcom,ramp-pause-lo-count = <2>;
+				qcom,ramp-low-index = <0>;
+				qcom,ramp-high-index = <20>;
+				qcom,ramp-from-low-to-high;
+				qcom,ramp-pattern-repeat;
+			};
+
+			lpg4 {
+				qcom,lpg-chan-id = <4>;
+				qcom,ramp-step-ms = <100>;
+				qcom,ramp-pause-hi-count = <2>;
+				qcom,ramp-pause-lo-count = <2>;
+				qcom,ramp-low-index = <0>;
+				qcom,ramp-high-index = <20>;
+			};
+		};
+
+		pm660l_triled: leds@d000 {
+			compatible = "qcom,tri-led";
+			reg = <0xd000 0x100>;
+			label = "rgb";
+
+			red {
+				label = "red";
+				pwms = <&pm660l_lpg 2 1000000>;
+				led-sources = <0>;
+				linux,default-trigger = "timer";
+			};
+			
+			green {
+				label = "green";
+				pwms = <&pm660l_lpg 1 1000000>;
+				led-sources = <1>;
+				linux,default-trigger = "timer";
+			};
+
+			blue {
+				label = "blue";
+				pwms = <&pm660l_lpg 0 1000000>;
+				led-sources = <2>;
+				linux,default-trigger = "timer";
+			};
+		};
+
+		pm660l_flash_led: leds@d300 {
+			compatible = "qcom,qpnp-flash-led-v2";
+			reg = <0xd300 0x100>;
+			label = "flash";
+			interrupts = <0x03 0xd3 0x00 
+						  0x01 0x03 0xd3
+						  0x03 0x01 0x03 
+						  0xd3 0x04 0x01>;
+			interrupt-names = "led-fault-irq", "all-ramp-down-done-irq", "all-ramp-up-done-irq";
+			qcom,hdrm-auto-mode;
+			qcom,short-circuit-det;
+			qcom,open-circuit-det;
+			qcom,vph-droop-det;
+			qcom,thermal-derate-en;
+			qcom,thermal-derate-current = <200 500 1000>;
+			qcom,isc-delay = <192>;
+			qcom,pmic-revid = <&pm660l_revid>;
+
+			flash_0 {
+				label = "flash";
+				qcom,led-name = "led:flash_0";
+				qcom,max-current = <1500>;
+				qcom,default-led-trigger = "flash0_trigger";
+				qcom,id = <0>;
+				qcom,current-ma = <1000>;
+				qcom,duration-ms = <1280>;
+				qcom,ires-ua = <12500>;
+				qcom,hdrm-voltage-mv = <325>;
+				qcom,hdrm-vol-hi-lo-win-mv = <100>;
+			};
+
+			flash_1 {
+				label = "flash";
+				qcom,led-name = "led:flash_1";
+				qcom,max-current = <1500>;
+				qcom,default-led-trigger = "flash1_trigger";
+				qcom,id = <1>;
+				qcom,current-ma = <1500>;
+				qcom,duration-ms = <1280>;
+				qcom,ires-ua = <12500>;
+				qcom,hdrm-voltage-mv = <325>;
+				qcom,hdrm-vol-hi-lo-win-mv = <100>;
+			};
+
+			flash_2 {
+				label = "flash";
+				qcom,led-name = "led:flash_2";
+				qcom,max-current = <750>;
+				qcom,default-led-trigger = "flash2_trigger";
+				qcom,id = <2>;
+				qcom,current-ma = <500>;
+				qcom,duration-ms = <1280>;
+				qcom,ires-ua = <12500>;
+				qcom,hdrm-voltage-mv = <325>;
+				qcom,hdrm-vol-hi-lo-win-mv = <100>;
+			};
+
+			torch_0 {
+				label = "torch";
+				qcom,led-name = "led:torch_0";
+				qcom,max-current = <500>;
+				qcom,default-led-trigger = "torch0_trigger";
+				qcom,id = <0>;
+				qcom,current-ma = <100>;
+				qcom,ires-ua = <12500>;
+				qcom,hdrm-voltage-mv = <325>;
+				qcom,hdrm-vol-hi-lo-win-mv = <100>;
+			};
+
+			torch_1 {
+				label = "torch";
+				qcom,led-name = "led:torch_1";
+				qcom,max-current = <500>;
+				qcom,default-led-trigger = "torch1_trigger";
+				qcom,id = <1>;
+				qcom,current-ma = <300>;
+				qcom,ires-ua = <12500>;
+				qcom,hdrm-voltage-mv = <325>;
+				qcom,hdrm-vol-hi-lo-win-mv = <100>;
+			};
+
+			torch_2 {
+				label = "torch";
+				qcom,led-name = "led:torch_2";
+				qcom,max-current = <500>;
+				qcom,default-led-trigger = "torch2_trigger";
+				qcom,id = <2>;
+				qcom,current-ma = <300>;
+				qcom,ires-ua = <12500>;
+				qcom,hdrm-voltage-mv = <325>;
+				qcom,hdrm-vol-hi-lo-win-mv = <100>;
+			};
+
+			led_switch_0 {
+				label = "switch";
+				qcom,led-name = "led:switch_0";
+				qcom,led-mask = <1>;
+				qcom,default-led-trigger = "switch0_trigger";
+			};
+
+			led_switch_1 {
+				label = "switch";
+				qcom,led-name = "led:switch_1";
+				qcom,led-mask = <4>;
+				qcom,default-led-trigger = "switch1_trigger";
+			};
+		};
+	};
+};
+
