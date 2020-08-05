@@ -58,7 +58,6 @@
 		input-name = "gpio-keys";
 		#address-cells = <1>;
 		#size-cells = <0>;
-		autorepeat;
 
 		vol_down {
 			label = "Volume Down";
