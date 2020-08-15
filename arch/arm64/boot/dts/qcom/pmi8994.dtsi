@@ -31,14 +31,22 @@
 			compatible = "qcom,pmi8994-regulators";
 			#address-cells = <1>;
 			#size-cells = <1>;
+		};
 
-			pmi8994_s2: s2@1700 {
-				reg = <0x1700 0x100>;
-				status = "ok";
-				regulator-min-microvolt = <400000>;
-				regulator-max-microvolt = <1015000>;
-				regulator-always-on;
-			};
+		pmi8994_wled: wled@d800 {
+			compatible = "qcom,pmi8994-wled";
+			reg = <0xd800 0xd900>;
+
+			interrupts = <3 0xd8 0x02 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "short";
+
+			qcom,num-strings = <3>;
+			qcom,enabled-strings = <0 1 2 3>;
+			/* The fourth string doesn't exist
+			Its put there because otherwise the
+			driver gets all 0s in its array */
+			qcom,cabc;
+			qcom,eternal-pfet;
 		};
 	};
 };

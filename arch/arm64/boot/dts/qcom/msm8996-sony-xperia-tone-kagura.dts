@@ -35,13 +35,13 @@
 };
 
 &blsp2_i2c11 {
+#if 0
 	fusb301@25 {
 		status = "okay";
 		compatible = "fusb301";
 		reg = <0x25>;
 		interrupt-parent = <&msmgpio>;
-		interrupts = <0x3b 0x02>,
-				<0x83 0x03>;
+		interrupts = <0x3b 0x02>, <0x83 0x03>;
 		fusb301,cbl_sns-enabled;
 		fusb301,cbl_sns-gpio = <&msmgpio 0x19 0x00>;
 		fusb301,int-gpio = <&msmgpio 0x3b 0x00>;
@@ -52,6 +52,7 @@
 		pinctrl-0 = <&usb_cable_det_n_gpio &usb_cable_sense_en_gpio
 				&usb_cc_int_n_gpio>;
 	};
+#endif
 };
 
 &dsi0 {
@@ -67,9 +68,10 @@
 		disp-te-gpio = <&msmgpio 10 0>;
 
 		vddio-supply = <&pm8994_s4>;
-		avdd-supply = <&pm8994_l22>;
+		avdd-supply = <&pm8994_l2>;
+		tvdd-supply = <&pm8994_l22>;
 
-		pvddio-gpio = <&msmgpio 51 GPIO_ACTIVE_HIGH>;
+		//pvddio-gpio = <&msmgpio 51 GPIO_ACTIVE_HIGH>;
 		preset-gpio = <&msmgpio 8 GPIO_ACTIVE_HIGH>;
 		tvddio-gpio = <&msmgpio 50 GPIO_ACTIVE_HIGH>;
 		treset-gpio = <&msmgpio 89 GPIO_ACTIVE_HIGH>;

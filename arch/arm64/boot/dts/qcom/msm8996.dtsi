@@ -790,6 +790,8 @@
 					      "ref";
 			};
 		};
+
+		#if 0
 		gpu@b00000 {
 			compatible = "qcom,adreno-530.2", "qcom,adreno";
 			#stream-id-cells = <16>;
@@ -811,7 +813,7 @@
 				"mem",
 				"mem_iface";
 
-			power-domains = <&mmcc GPU_GX_GDSC>;
+			power-domains = <&mmcc GPU_GDSC>;
 			iommus = <&adreno_smmu 0>;
 
 			nvmem-cells = <&gpu_speed_bin>;
@@ -864,7 +866,7 @@
 				memory-region = <&zap_shader_region>;
 			};
 		};
-
+#endif
 		msmgpio: pinctrl@1010000 {
 			compatible = "qcom,msm8996-pinctrl";
 			reg = <0x01010000 0x300000>;
@@ -1991,7 +1993,7 @@
 
 			resets = <&gcc GCC_QUSB2PHY_PRIM_BCR>;
 			nvmem-cells = <&qusb2p_hstx_trim>;
-			status = "disabled";
+			//status = "disabled";
 		};
 
 		hsusb_phy2: phy@7412000 {
@@ -2005,7 +2007,8 @@
 
 			resets = <&gcc GCC_QUSB2PHY_SEC_BCR>;
 			nvmem-cells = <&qusb2s_hstx_trim>;
-			status = "disabled";
+			//status = "disabled";
+			status = "okay";
 		};
 
 		sdhc2: sdhci@74a4900 {
@@ -2148,7 +2151,8 @@
 			assigned-clock-rates = <19200000>, <60000000>;
 
 			power-domains = <&gcc USB30_GDSC>;
-			status = "disabled";
+			//status = "disabled";
+			qcom,select-utmi-as-pipe-clk;
 
 			dwc3@7600000 {
 				compatible = "snps,dwc3";
