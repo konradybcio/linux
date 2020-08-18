@@ -281,7 +281,7 @@
 		//cd-gpios = <&msmgpio 40 GPIO_ACTIVE_LOW>;
 		vmmc-supply = <&pm8994_l21>;
 		vqmmc-supply = <&pm8994_l13>;
-		status = "ok";
+		//status = "ok";
 	};
 
 	blsp2_i2c11: i2c@75b9000 {
