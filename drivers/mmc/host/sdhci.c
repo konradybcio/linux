@@ -204,7 +204,6 @@ void sdhci_reset(struct sdhci_host *host, u8 mask)
 {
 	ktime_t timeout;
 
-retry_reset:
 	sdhci_writeb(host, mask, SDHCI_SOFTWARE_RESET);
 
 	if (mask & SDHCI_RESET_ALL) {
@@ -227,39 +226,9 @@ retry_reset:
 			pr_err("%s: Reset 0x%x never completed.\n",
 				mmc_hostname(host->mmc), (int)mask);
 			sdhci_dumpregs(host);
-
-			if ((host->ops->reset_workaround) && (host->quirks2 & SDHCI_QUIRK2_USE_RESET_WORKAROUND)) {
-				if (!host->reset_wa_applied) {
-					/*
-					 * apply the workaround and issue
-					 * reset again.
-					 */
-					host->ops->reset_workaround(host, 1);
-					host->reset_wa_applied = 1;
-					host->reset_wa_cnt++;
-					goto retry_reset;
-				}
-			}
-		} else {
-			pr_err("%s: Reset 0x%x failed with workaround.\n",
-				mmc_hostname(host->mmc), (int)mask);
-			sdhci_dumpregs(host);
-			/* clear the workaround */
-			host->ops->reset_workaround(host, 0);
-			host->reset_wa_applied = 0;
 			return;
 		}
-
 		udelay(10);
-
-		if ((host->quirks2 & SDHCI_QUIRK2_USE_RESET_WORKAROUND) &&
-				host->ops->reset_workaround && host->reset_wa_applied) {
-			pr_info("%s: Reset 0x%x successful with workaround\n",
-					mmc_hostname(host->mmc), (int)mask);
-			/* clear the workaround */
-			host->ops->reset_workaround(host, 0);
-			host->reset_wa_applied = 0;
-		}
 	}
 }
 EXPORT_SYMBOL_GPL(sdhci_reset);

@@ -111,8 +111,6 @@
 
 #define DDR_CONFIG_POR_VAL	0x80040873
 
-#define CORE_HC_SW_RST_WAIT_IDLE_DIS	(1 << 20)
-#define CORE_HC_SW_RST_REQ (1 << 21)
 
 #define INVALID_TUNING_PHASE	-1
 #define SDHCI_MSM_MIN_CLOCK	400000
@@ -1912,53 +1910,6 @@ void sdhci_msm_dump_vendor_regs(struct sdhci_host *host)
 		readl_relaxed(host->ioaddr + msm_offset->core_vendor_spec3));
 }
 
-void sdhci_msm_reset_workaround(struct sdhci_host *host, u32 enable)
-{
-	u32 vendor_func2;
-	unsigned long timeout;
-	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
-	struct sdhci_msm_host *msm_host = sdhci_pltfm_priv(pltfm_host);
-	const struct sdhci_msm_offset *msm_host_offset =
-					msm_host->offset;
-
-	vendor_func2 = readl_relaxed(host->ioaddr +
-		msm_host_offset->core_vendor_spec_func2);
-
-	if (enable) {
-		writel_relaxed(vendor_func2 | CORE_HC_SW_RST_REQ, host->ioaddr +
-				msm_host_offset->core_vendor_spec_func2);
-		timeout = 10000;
-		while (readl_relaxed(host->ioaddr +
-		msm_host_offset->core_vendor_spec_func2) & CORE_HC_SW_RST_REQ) {
-			if (timeout == 0) {
-				pr_info("%s: Applying wait idle disable workaround\n",
-					mmc_hostname(host->mmc));
-				/*
-				 * Apply the reset workaround to not wait for
-				 * pending data transfers on AXI before
-				 * resetting the controller. This could be
-				 * risky if the transfers were stuck on the
-				 * AXI bus.
-				 */
-				vendor_func2 = readl_relaxed(host->ioaddr +
-				msm_host_offset->core_vendor_spec_func2);
-				writel_relaxed(vendor_func2 |
-				CORE_HC_SW_RST_WAIT_IDLE_DIS, host->ioaddr +
-				msm_host_offset->core_vendor_spec_func2);
-				host->reset_wa_t = ktime_get();
-				return;
-			}
-			timeout--;
-			udelay(10);
-		}
-		pr_info("%s: waiting for SW_RST_REQ is successful\n",
-				mmc_hostname(host->mmc));
-	} else {
-		writel_relaxed(vendor_func2 & ~CORE_HC_SW_RST_WAIT_IDLE_DIS,
-			host->ioaddr + msm_host_offset->core_vendor_spec_func2);
-	}
-}
-
 static const struct sdhci_msm_variant_ops mci_var_ops = {
 	.msm_readl_relaxed = sdhci_msm_mci_variant_readl_relaxed,
 	.msm_writel_relaxed = sdhci_msm_mci_variant_writel_relaxed,
@@ -2015,7 +1966,6 @@ static const struct sdhci_ops sdhci_msm_ops = {
 	.write_b = sdhci_msm_writeb,
 	.irq	= sdhci_msm_cqe_irq,
 	.dump_vendor_regs = sdhci_msm_dump_vendor_regs,
-	.reset_workaround = sdhci_msm_reset_workaround,
 };
 
 static const struct sdhci_pltfm_data sdhci_msm_pdata = {
@@ -2024,8 +1974,7 @@ static const struct sdhci_pltfm_data sdhci_msm_pdata = {
 		  SDHCI_QUIRK_CAP_CLOCK_BASE_BROKEN |
 		  SDHCI_QUIRK_MULTIBLOCK_READ_ACMD12,
 
-	.quirks2 = SDHCI_QUIRK2_PRESET_VALUE_BROKEN |
-			  SDHCI_QUIRK2_USE_RESET_WORKAROUND,
+	.quirks2 = SDHCI_QUIRK2_PRESET_VALUE_BROKEN,
 	.ops = &sdhci_msm_ops,
 };
 
