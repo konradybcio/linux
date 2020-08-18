@@ -474,6 +474,9 @@ struct sdhci_host {
  */
 #define SDHCI_QUIRK2_USE_32BIT_BLK_CNT			(1<<18)
 
+/* Use reset workaround in case sdhci reset timeouts */
+#define SDHCI_QUIRK2_USE_RESET_WORKAROUND		(1<<26)
+
 	int irq;		/* Device IRQ */
 	void __iomem *ioaddr;	/* Mapped address */
 	phys_addr_t mapbase;	/* physical address base */
@@ -604,6 +607,15 @@ struct sdhci_host {
 
 	u64			data_timeout;
 
+	/* Reset workaround status */
+	int reset_wa_applied;
+
+	/* Time when the reset workaround is applied */
+	ktime_t reset_wa_t;
+
+	/* Total number of times workaround is used */
+        int reset_wa_cnt;
+
 	unsigned long private[] ____cacheline_aligned;
 };
 
@@ -651,6 +663,7 @@ struct sdhci_ops {
 	void	(*request_done)(struct sdhci_host *host,
 				struct mmc_request *mrq);
 	void    (*dump_vendor_regs)(struct sdhci_host *host);
+	void    (*reset_workaround)(struct sdhci_host *host, u32 enable);
 };
 
 #ifdef CONFIG_MMC_SDHCI_IO_ACCESSORS
