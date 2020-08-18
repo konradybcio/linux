@@ -18,7 +18,7 @@
 	};
 
 	chosen {
-		bootargs = "PMOS_NO_OUTPUT_REDIRECT";
+		bootargs = "PMOS_NO_OUTPUT_REDIRECT root=/dev/mmcblk1p2";
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
@@ -269,7 +269,7 @@
 		//mmc-hs400-1_8v;
 		bus-width = <8>;
 		non-removable;
-		//status = "disabled";
+		status = "disabled";
 	};
 
 	sdhci@74a4900 {
@@ -278,10 +278,10 @@
 				&tray_det_gpio>;
 		pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off
 				&tray_det_gpio>;
-		cd-gpios = <&msmgpio 40 GPIO_ACTIVE_LOW>;
+		//cd-gpios = <&msmgpio 40 GPIO_ACTIVE_LOW>;
 		vmmc-supply = <&pm8994_l21>;
 		vqmmc-supply = <&pm8994_l13>;
-		status = "disabled";
+		status = "ok";
 	};
 
 	blsp2_i2c11: i2c@75b9000 {

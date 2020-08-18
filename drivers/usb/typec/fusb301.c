@@ -1999,7 +1999,12 @@ static int fusb301_probe(struct i2c_client *client,
 	}
 	INIT_DELAYED_WORK(&chip->dwork, fusb301_work_handler);
 	INIT_DELAYED_WORK(&chip->twork, fusb301_timer_work_handler);
-	wakeup_source_init(&chip->wlock, "fusb301_wake");
+	//wakeup_source_init(&chip->wlock, "fusb301_wake");
+#if 1
+	//memset(&chip->wlock, 0, sizeof(chip->wlock));
+	wakeup_source_register(cdev, "fusb301_wake");
+#endif
+	//
 	mutex_init(&chip->mlock);
 
 	ret = fusb301_create_devices(cdev);

@@ -59,9 +59,14 @@
 	status = "okay";
 
 	vdda-supply = <&pm8994_l2>;
-	vcca-supply = <&pm8994_l28>;
+	vcca-supply = <&pm8994_l22>;
 	
-	panel: panel@0 {
+	/* 
+	 * The panel ONLY seems to initialize properly if you flash the kernel
+	 * and coldboot the device so that bootloader can set some things up.
+	 * Hence, "fastboot boot" ain't gonna cut it, chief.
+	 */
+	panel@0 {
 		compatible = "jdi,syn-incell,xxxsuzu";
 		reg = <0>;
 		status = "okay";
@@ -82,14 +87,9 @@
 			&tp_vddio_en_gpio &lcd_vddio_en_gpio
 			&ts_reset_n_gpio>;
 
-		ports {
-			#address-cells = <1>;
-			#size-cells = <0>;
-			port@0 {
-				reg = <0>;
-				panel_in: endpoint {
-					remote-endpoint = <&dsi0_out>;
-				};
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&dsi0_out>;
 			};
 		};
 	};

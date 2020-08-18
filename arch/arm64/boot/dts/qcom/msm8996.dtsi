@@ -791,7 +791,7 @@
 			};
 		};
 
-		#if 0
+		#if 1
 		gpu@b00000 {
 			compatible = "qcom,adreno-530.2", "qcom,adreno";
 			#stream-id-cells = <16>;
