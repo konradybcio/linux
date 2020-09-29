@@ -5462,8 +5462,9 @@ wait_for_construction:
 
 		/* return error if we tried this already recently */
 		if (time_before(jiffies, tlink->tl_time + TLINK_ERROR_EXPIRE)) {
+			newtlink = (struct tcon_link *) tlink->tl_tcon;
 			cifs_put_tlink(tlink);
-			return ERR_PTR(-EACCES);
+			return newtlink;
 		}
 
 		if (test_and_set_bit(TCON_LINK_PENDING, &tlink->tl_flags))
@@ -5475,8 +5476,9 @@ wait_for_construction:
 	wake_up_bit(&tlink->tl_flags, TCON_LINK_PENDING);
 
 	if (IS_ERR(tlink->tl_tcon)) {
+		newtlink = (struct tcon_link *) tlink->tl_tcon;
 		cifs_put_tlink(tlink);
-		return ERR_PTR(-EACCES);
+		return newtlink;
 	}
 
 	return tlink;
