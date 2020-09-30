@@ -1213,6 +1213,41 @@ static void pci_acpi_optimize_delay(struct pci_dev *pdev,
 	ACPI_FREE(obj);
 }
 
+/* pci_acpi_evaluate_ltr_latency
+ *
+ * @dev - pci_dev for which to evaluate Latency Tolerance Reporting _DSM
+ */
+void pci_acpi_evaluate_ltr_latency(struct pci_dev *dev)
+{
+#ifdef CONFIG_PCIEASPM
+	struct acpi_device *adev;
+	union acpi_object *obj, *elements;
+
+	adev = ACPI_COMPANION(&dev->dev);
+	if (!adev && !pci_dev_is_added(dev))
+		adev = acpi_pci_find_companion(&dev->dev);
+	if (!adev)
+		return;
+
+	if (!acpi_check_dsm(adev->handle, &pci_acpi_dsm_guid, 2,
+			    1ULL << DSM_PCI_LTR_MAX_LATENCY))
+		return;
+	obj = acpi_evaluate_dsm(adev->handle, &pci_acpi_dsm_guid, 2,
+				DSM_PCI_LTR_MAX_LATENCY, NULL);
+	if (!obj)
+		return;
+
+	if (obj->type == ACPI_TYPE_PACKAGE && obj->package.count == 4) {
+		elements = obj->package.elements;
+		dev->max_snoop_latency = (u16) (elements[1].integer.value |
+			(elements[0].integer.value << PCI_LTR_SCALE_SHIFT));
+		dev->max_nosnoop_latency = (u16) (elements[3].integer.value |
+			(elements[2].integer.value << PCI_LTR_SCALE_SHIFT));
+	}
+	ACPI_FREE(obj);
+#endif
+}
+
 static void pci_acpi_set_external_facing(struct pci_dev *dev)
 {
 	u8 val;

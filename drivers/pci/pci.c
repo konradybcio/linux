@@ -3060,6 +3060,90 @@ void pci_pm_init(struct pci_dev *dev)
 		dev->imm_ready = 1;
 }
 
+/**
+ * pci_ltr_decode - Decode the latency to a value in ns
+ * @latency: latency register value according to PCIe r5.0, sec 6.18, 7.8.2
+ */
+static u64 pci_ltr_decode(u16 latency)
+{
+	u16 scale = (latency & PCI_LTR_SCALE_MASK) >> 10;
+	u16 value = latency & PCI_LTR_VALUE_MASK;
+
+	switch (scale) {
+	case 0: return value;
+	case 1: return value * 32;
+	case 2: return value * 1024;
+	case 3: return value * 32768;
+	case 4: return value * 1048576;
+	case 5: return value * 33554432;
+	}
+	return 0;
+}
+
+/**
+ * pci_ltr_encode - Encode the value in ns to a 16 bit register value
+ * @val: latency to encode in ns
+ *
+ * Returns @val encoded according to PCIe r5.0, sec 6.18, 7.8.2.
+ */
+static u16 pci_ltr_encode(u64 val)
+{
+	if (val <= 1UL * 0x3ff)        return (0 << 10) | ((val >>  0) & 0x3ff);
+	if (val <= 32UL * 0x3ff)       return (1 << 10) | ((val >>  5) & 0x3ff);
+	if (val <= 1024UL * 0x3ff)     return (2 << 10) | ((val >> 10) & 0x3ff);
+	if (val <= 32768UL * 0x3ff)    return (3 << 10) | ((val >> 15) & 0x3ff);
+	if (val <= 1048576UL * 0x3ff)  return (4 << 10) | ((val >> 20) & 0x3ff);
+	if (val <= 33554432UL * 0x3ff) return (5 << 10) | ((val >> 25) & 0x3ff);
+	return 0;
+}
+
+/**
+ * pci_ltr_init - Initialize Latency Tolerance Reporting capability of
+ * 		  given PCI device
+ * @dev: PCI device
+ */
+void pci_ltr_init(struct pci_dev *dev)
+{
+#ifdef CONFIG_PCIEASPM
+	int ltr;
+	struct pci_dev *bridge;
+	u64 snoop = 0, nosnoop = 0;
+	u16 snoop_enc, snoop_cur, nosnoop_enc, nosnoop_cur;
+
+	ltr = pci_find_ext_capability(dev, PCI_EXT_CAP_ID_LTR);
+	if (!ltr)
+		return;
+
+	bridge = pci_upstream_bridge(dev);
+	while (bridge) {
+		snoop += pci_ltr_decode(bridge->max_snoop_latency);
+		nosnoop += pci_ltr_decode(bridge->max_nosnoop_latency);
+		bridge = pci_upstream_bridge(bridge);
+	}
+
+	pci_dbg(dev, "calculated Max Snoop Latency %lluns Max No-Snoop Latency %lluns\n",
+		snoop, nosnoop);
+
+	snoop_enc = pci_ltr_encode(snoop);
+	pci_read_config_word(dev, ltr + PCI_LTR_MAX_SNOOP_LAT, &snoop_cur);
+	if (snoop_enc != snoop_cur) {
+		pci_info(dev, "setting Max Snoop Latency %lluns (was %lluns)\n",
+			 snoop, pci_ltr_decode(snoop_cur));
+		pci_write_config_word(dev, ltr + PCI_LTR_MAX_SNOOP_LAT,
+				      snoop_enc);
+	}
+
+	nosnoop_enc = pci_ltr_encode(nosnoop);
+	pci_read_config_word(dev, ltr + PCI_LTR_MAX_NOSNOOP_LAT, &nosnoop_cur);
+	if (nosnoop_enc != nosnoop_cur) {
+		pci_info(dev, "setting Max No-Snoop Latency %lluns (was %lluns)\n",
+			 nosnoop, pci_ltr_decode(nosnoop_cur));
+		pci_write_config_word(dev, ltr + PCI_LTR_MAX_NOSNOOP_LAT,
+				      nosnoop_enc);
+	}
+#endif
+}
+
 static unsigned long pci_ea_flags(struct pci_dev *dev, u8 prop)
 {
 	unsigned long flags = IORESOURCE_PCI_FIXED | IORESOURCE_PCI_EA_BEI;
