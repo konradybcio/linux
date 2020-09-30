@@ -667,6 +667,8 @@ static void soc15_reg_base_init(struct amdgpu_device *adev)
 					 "fallback to legacy init method\n");
 				vega10_reg_base_init(adev);
 			}
+		} else {
+			vega10_reg_base_init(adev);
 		}
 		break;
 	case CHIP_VEGA20:
