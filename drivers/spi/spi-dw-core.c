@@ -12,6 +12,7 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/spi/spi.h>
+#include <linux/of.h>
 
 #include "spi-dw.h"
 
@@ -22,10 +23,11 @@
 /* Slave spi_dev related */
 struct chip_data {
 	u8 tmode;		/* TR/TO/RO/EEPROM */
-	u8 type;		/* SPI/SSP/MicroWire */
 
 	u16 clk_div;		/* baud rate divider */
 	u32 speed_hz;		/* baud rate */
+
+	u32 rx_sample_dly;	/* RX sample delay */
 };
 
 #ifdef CONFIG_DEBUG_FS
@@ -52,6 +54,7 @@ static const struct debugfs_reg32 dw_spi_dbgfs_regs[] = {
 	DW_SPI_DBGFS_REG("DMACR", DW_SPI_DMACR),
 	DW_SPI_DBGFS_REG("DMATDLR", DW_SPI_DMATDLR),
 	DW_SPI_DBGFS_REG("DMARDLR", DW_SPI_DMARDLR),
+	DW_SPI_DBGFS_REG("RX_SAMPLE_DLY", DW_SPI_RX_SAMPLE_DLY),
 };
 
 static int dw_spi_debugfs_init(struct dw_spi *dws)
@@ -101,7 +104,7 @@ void dw_spi_set_cs(struct spi_device *spi, bool enable)
 	 */
 	if (cs_high == enable)
 		dw_writel(dws, DW_SPI_SER, BIT(spi->chip_select));
-	else if (dws->cs_override)
+	else if (dws->caps & DW_SPI_CAP_CS_OVERRIDE)
 		dw_writel(dws, DW_SPI_SER, 0);
 }
 EXPORT_SYMBOL_GPL(dw_spi_set_cs);
@@ -138,11 +141,9 @@ static inline u32 rx_max(struct dw_spi *dws)
 
 static void dw_writer(struct dw_spi *dws)
 {
-	u32 max;
+	u32 max = tx_max(dws);
 	u16 txw = 0;
 
-	spin_lock(&dws->buf_lock);
-	max = tx_max(dws);
 	while (max--) {
 		/* Set the tx word if the transfer's original "tx" is not null */
 		if (dws->tx_end - dws->len) {
@@ -154,16 +155,13 @@ static void dw_writer(struct dw_spi *dws)
 		dw_write_io_reg(dws, DW_SPI_DR, txw);
 		dws->tx += dws->n_bytes;
 	}
-	spin_unlock(&dws->buf_lock);
 }
 
 static void dw_reader(struct dw_spi *dws)
 {
-	u32 max;
+	u32 max = rx_max(dws);
 	u16 rxw;
 
-	spin_lock(&dws->buf_lock);
-	max = rx_max(dws);
 	while (max--) {
 		rxw = dw_read_io_reg(dws, DW_SPI_DR);
 		/* Care rx only if the transfer's original "rx" is not null */
@@ -175,7 +173,6 @@ static void dw_reader(struct dw_spi *dws)
 		}
 		dws->rx += dws->n_bytes;
 	}
-	spin_unlock(&dws->buf_lock);
 }
 
 static void int_error_stop(struct dw_spi *dws, const char *msg)
@@ -200,7 +197,7 @@ static irqreturn_t interrupt_transfer(struct dw_spi *dws)
 
 	dw_reader(dws);
 	if (dws->rx_end == dws->rx) {
-		spi_mask_intr(dws, SPI_INT_TXEI);
+		spi_mask_intr(dws, 0xff);
 		spi_finalize_current_transfer(dws->master);
 		return IRQ_HANDLED;
 	}
@@ -224,7 +221,7 @@ static irqreturn_t dw_spi_irq(int irq, void *dev_id)
 		return IRQ_NONE;
 
 	if (!master->cur_msg) {
-		spi_mask_intr(dws, SPI_INT_TXEI);
+		spi_mask_intr(dws, 0xff);
 		return IRQ_HANDLED;
 	}
 
@@ -240,7 +237,7 @@ u32 dw_spi_update_cr0(struct spi_controller *master, struct spi_device *spi,
 
 	/* Default SPI mode is SCPOL = 0, SCPH = 0 */
 	cr0 = (transfer->bits_per_word - 1)
-		| (chip->type << SPI_FRF_OFFSET)
+		| (SSI_MOTO_SPI << SPI_FRF_OFFSET)
 		| ((((spi->mode & SPI_CPOL) ? 1 : 0) << SPI_SCOL_OFFSET) |
 		   (((spi->mode & SPI_CPHA) ? 1 : 0) << SPI_SCPH_OFFSET) |
 		   (((spi->mode & SPI_LOOP) ? 1 : 0) << SPI_SRL_OFFSET))
@@ -255,6 +252,7 @@ u32 dw_spi_update_cr0_v1_01a(struct spi_controller *master,
 			     struct spi_device *spi,
 			     struct spi_transfer *transfer)
 {
+	struct dw_spi *dws = spi_controller_get_devdata(master);
 	struct chip_data *chip = spi_get_ctldata(spi);
 	u32 cr0;
 
@@ -262,7 +260,7 @@ u32 dw_spi_update_cr0_v1_01a(struct spi_controller *master,
 	cr0 = (transfer->bits_per_word - 1);
 
 	/* CTRLR0[ 7: 6] Frame Format */
-	cr0 |= chip->type << DWC_SSI_CTRLR0_FRF_OFFSET;
+	cr0 |= SSI_MOTO_SPI << DWC_SSI_CTRLR0_FRF_OFFSET;
 
 	/*
 	 * SPI mode (SCPOL|SCPH)
@@ -278,6 +276,9 @@ u32 dw_spi_update_cr0_v1_01a(struct spi_controller *master,
 	/* CTRLR0[13] Shift Register Loop */
 	cr0 |= ((spi->mode & SPI_LOOP) ? 1 : 0) << DWC_SSI_CTRLR0_SRL_OFFSET;
 
+	if (dws->caps & DW_SPI_CAP_KEEMBAY_MST)
+		cr0 |= DWC_SSI_CTRLR0_KEEMBAY_MST;
+
 	return cr0;
 }
 EXPORT_SYMBOL_GPL(dw_spi_update_cr0_v1_01a);
@@ -287,20 +288,18 @@ static int dw_spi_transfer_one(struct spi_controller *master,
 {
 	struct dw_spi *dws = spi_controller_get_devdata(master);
 	struct chip_data *chip = spi_get_ctldata(spi);
-	unsigned long flags;
 	u8 imask = 0;
 	u16 txlevel = 0;
 	u32 cr0;
 	int ret;
 
 	dws->dma_mapped = 0;
-	spin_lock_irqsave(&dws->buf_lock, flags);
+	dws->n_bytes = DIV_ROUND_UP(transfer->bits_per_word, BITS_PER_BYTE);
 	dws->tx = (void *)transfer->tx_buf;
 	dws->tx_end = dws->tx + transfer->len;
 	dws->rx = transfer->rx_buf;
 	dws->rx_end = dws->rx + transfer->len;
 	dws->len = transfer->len;
-	spin_unlock_irqrestore(&dws->buf_lock, flags);
 
 	/* Ensure dw->rx and dw->rx_end are visible */
 	smp_mb();
@@ -319,7 +318,6 @@ static int dw_spi_transfer_one(struct spi_controller *master,
 	}
 
 	transfer->effective_speed_hz = dws->max_freq / chip->clk_div;
-	dws->n_bytes = DIV_ROUND_UP(transfer->bits_per_word, BITS_PER_BYTE);
 
 	cr0 = dws->update_cr0(master, spi, transfer);
 	dw_writel(dws, DW_SPI_CTRLR0, cr0);
@@ -327,6 +325,12 @@ static int dw_spi_transfer_one(struct spi_controller *master,
 	/* Check if current transfer is a DMA transaction */
 	if (master->can_dma && master->can_dma(master, spi, transfer))
 		dws->dma_mapped = master->cur_msg_mapped;
+
+	/* Update RX sample delay if required */
+	if (dws->cur_rx_sample_dly != chip->rx_sample_dly) {
+		dw_writel(dws, DW_SPI_RX_SAMPLE_DLY, chip->rx_sample_dly);
+		dws->cur_rx_sample_dly = chip->rx_sample_dly;
+	}
 
 	/* For poll mode just disable all interrupts */
 	spi_mask_intr(dws, 0xff);
@@ -380,10 +384,22 @@ static int dw_spi_setup(struct spi_device *spi)
 	/* Only alloc on first setup */
 	chip = spi_get_ctldata(spi);
 	if (!chip) {
+		struct dw_spi *dws = spi_controller_get_devdata(spi->controller);
+		u32 rx_sample_dly_ns;
+
 		chip = kzalloc(sizeof(struct chip_data), GFP_KERNEL);
 		if (!chip)
 			return -ENOMEM;
 		spi_set_ctldata(spi, chip);
+		/* Get specific / default rx-sample-delay */
+		if (device_property_read_u32(&spi->dev,
+					     "rx-sample-delay-ns",
+					     &rx_sample_dly_ns) != 0)
+			/* Use default controller value */
+			rx_sample_dly_ns = dws->def_rx_sample_dly_ns;
+		chip->rx_sample_dly = DIV_ROUND_CLOSEST(rx_sample_dly_ns,
+							NSEC_PER_SEC /
+							dws->max_freq);
 	}
 
 	chip->tmode = SPI_TMOD_TR;
@@ -423,7 +439,7 @@ static void spi_hw_init(struct device *dev, struct dw_spi *dws)
 	}
 
 	/* enable HW fixup for explicit CS deselect for Amazon's alpine chip */
-	if (dws->cs_override)
+	if (dws->caps & DW_SPI_CAP_CS_OVERRIDE)
 		dw_writel(dws, DW_SPI_CS_OVERRIDE, 0xF);
 }
 
@@ -440,11 +456,12 @@ int dw_spi_add_host(struct device *dev, struct dw_spi *dws)
 		return -ENOMEM;
 
 	dws->master = master;
-	dws->type = SSI_MOTO_SPI;
 	dws->dma_addr = (dma_addr_t)(dws->paddr + DW_SPI_DR);
-	spin_lock_init(&dws->buf_lock);
 
 	spi_controller_set_devdata(master, dws);
+
+	/* Basic HW init */
+	spi_hw_init(dev, dws);
 
 	ret = request_irq(dws->irq, dw_spi_irq, IRQF_SHARED, dev_name(dev),
 			  master);
@@ -472,8 +489,9 @@ int dw_spi_add_host(struct device *dev, struct dw_spi *dws)
 	if (dws->set_cs)
 		master->set_cs = dws->set_cs;
 
-	/* Basic HW init */
-	spi_hw_init(dev, dws);
+	/* Get default rx sample delay */
+	device_property_read_u32(dev, "rx-sample-delay-ns",
+				 &dws->def_rx_sample_dly_ns);
 
 	if (dws->dma_ops && dws->dma_ops->dma_init) {
 		ret = dws->dma_ops->dma_init(dev, dws);
