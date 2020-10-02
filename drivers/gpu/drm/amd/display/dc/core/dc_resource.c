@@ -58,6 +58,9 @@
 #if defined(CONFIG_DRM_AMD_DC_DCN3_0)
 #include "../dcn30/dcn30_resource.h"
 #endif
+#if defined(CONFIG_DRM_AMD_DC_DCN3_01)
+#include "../dcn301/dcn301_resource.h"
+#endif
 
 #define DC_LOGGER_INIT(logger)
 
@@ -130,6 +133,12 @@ enum dce_version resource_parse_asic_id(struct hw_asic_id asic_id)
 			dc_version = DCN_VERSION_3_0;
 #endif
 		break;
+
+#if defined(CONFIG_DRM_AMD_DC_DCN3_01)
+	case FAMILY_VGH:
+		dc_version = DCN_VERSION_3_01;
+		break;
+#endif
 	default:
 		dc_version = DCE_VERSION_UNKNOWN;
 		break;
@@ -210,6 +219,11 @@ struct resource_pool *dc_create_resource_pool(struct dc  *dc,
 		break;
 #endif
 
+#if defined(CONFIG_DRM_AMD_DC_DCN3_01)
+	case DCN_VERSION_3_01:
+		res_pool = dcn301_create_resource_pool(init_data, dc);
+		break;
+#endif
 	default:
 		break;
 	}
@@ -785,13 +799,14 @@ static void calculate_recout(struct pipe_ctx *pipe_ctx)
 	/*
 	 * Only the leftmost ODM pipe should be offset by a nonzero distance
 	 */
-	if (!pipe_ctx->prev_odm_pipe)
+	if (!pipe_ctx->prev_odm_pipe) {
 		data->recout.x = stream->dst.x;
-	else
-		data->recout.x = 0;
-	if (stream->src.x < surf_clip.x)
-		data->recout.x += (surf_clip.x - stream->src.x) * stream->dst.width
+		if (stream->src.x < surf_clip.x)
+			data->recout.x += (surf_clip.x - stream->src.x) * stream->dst.width
 						/ stream->src.width;
+
+	} else
+		data->recout.x = 0;
 
 	data->recout.width = surf_clip.width * stream->dst.width / stream->src.width;
 	if (data->recout.width + data->recout.x > stream->dst.x + stream->dst.width)
