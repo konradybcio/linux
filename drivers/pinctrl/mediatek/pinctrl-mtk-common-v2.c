@@ -259,6 +259,10 @@ bool mtk_is_virt_gpio(struct mtk_pinctrl *hw, unsigned int gpio_n)
 
 	desc = (const struct mtk_pin_desc *)&hw->soc->pins[gpio_n];
 
+	/* if the GPIO is not supported for eint mode */
+	if (desc->eint.eint_m == NO_EINT_SUPPORT)
+		return virt_gpio;
+
 	if (desc->funcs && !desc->funcs[desc->eint.eint_m].name)
 		virt_gpio = true;
 
@@ -354,7 +358,6 @@ static const struct mtk_eint_xt mtk_eint_xt = {
 int mtk_build_eint(struct mtk_pinctrl *hw, struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
-	struct resource *res;
 
 	if (!IS_ENABLED(CONFIG_EINT_MTK))
 		return 0;
@@ -366,13 +369,7 @@ int mtk_build_eint(struct mtk_pinctrl *hw, struct platform_device *pdev)
 	if (!hw->eint)
 		return -ENOMEM;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "eint");
-	if (!res) {
-		dev_err(&pdev->dev, "Unable to get eint resource\n");
-		return -ENODEV;
-	}
-
-	hw->eint->base = devm_ioremap_resource(&pdev->dev, res);
+	hw->eint->base = devm_platform_ioremap_resource_byname(pdev, "eint");
 	if (IS_ERR(hw->eint->base))
 		return PTR_ERR(hw->eint->base);
 
