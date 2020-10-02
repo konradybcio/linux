@@ -1037,6 +1037,11 @@ static const struct usb_device_id id_table_combined[] = {
 	/* U-Blox devices */
 	{ USB_DEVICE(UBLOX_VID, UBLOX_C099F9P_ZED_PID) },
 	{ USB_DEVICE(UBLOX_VID, UBLOX_C099F9P_ODIN_PID) },
+	/* FreeCalypso USB adapters */
+	{ USB_DEVICE(FTDI_VID, FTDI_FALCONIA_JTAG_BUF_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
+	{ USB_DEVICE(FTDI_VID, FTDI_FALCONIA_JTAG_UNBUF_PID),
+		.driver_info = (kernel_ulong_t)&ftdi_jtag_quirk },
 	{ }					/* Terminating entry */
 };
 
@@ -2330,12 +2335,11 @@ static int ftdi_NDI_device_setup(struct usb_serial *serial)
  */
 static int ftdi_jtag_probe(struct usb_serial *serial)
 {
-	struct usb_device *udev = serial->dev;
-	struct usb_interface *interface = serial->interface;
+	struct usb_interface *intf = serial->interface;
+	int ifnum = intf->cur_altsetting->desc.bInterfaceNumber;
 
-	if (interface == udev->actconfig->interface[0]) {
-		dev_info(&udev->dev,
-			 "Ignoring serial port reserved for JTAG\n");
+	if (ifnum == 0) {
+		dev_info(&intf->dev, "Ignoring interface reserved for JTAG\n");
 		return -ENODEV;
 	}
 
@@ -2367,12 +2371,11 @@ static int ftdi_8u2232c_probe(struct usb_serial *serial)
  */
 static int ftdi_stmclite_probe(struct usb_serial *serial)
 {
-	struct usb_device *udev = serial->dev;
-	struct usb_interface *interface = serial->interface;
+	struct usb_interface *intf = serial->interface;
+	int ifnum = intf->cur_altsetting->desc.bInterfaceNumber;
 
-	if (interface == udev->actconfig->interface[0] ||
-	    interface == udev->actconfig->interface[1]) {
-		dev_info(&udev->dev, "Ignoring serial port reserved for JTAG\n");
+	if (ifnum < 2) {
+		dev_info(&intf->dev, "Ignoring interface reserved for JTAG\n");
 		return -ENODEV;
 	}
 
