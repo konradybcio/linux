@@ -15,7 +15,6 @@
 #include <linux/init.h>
 #include <linux/msi.h>
 #include <linux/of.h>
-#include <linux/of_pci.h>
 #include <linux/pci.h>
 #include <linux/pm.h>
 #include <linux/slab.h>
@@ -30,8 +29,6 @@
 #include <linux/pm_runtime.h>
 #include <linux/pci_hotplug.h>
 #include <linux/vmalloc.h>
-#include <linux/pci-ats.h>
-#include <asm/setup.h>
 #include <asm/dma.h>
 #include <linux/aer.h>
 #include "pci.h"
@@ -49,7 +46,7 @@ EXPORT_SYMBOL(isa_dma_bridge_buggy);
 int pci_pci_problems;
 EXPORT_SYMBOL(pci_pci_problems);
 
-unsigned int pci_pm_d3_delay;
+unsigned int pci_pm_d3hot_delay;
 
 static void pci_pme_list_scan(struct work_struct *work);
 
@@ -66,10 +63,10 @@ struct pci_pme_device {
 
 static void pci_dev_d3_sleep(struct pci_dev *dev)
 {
-	unsigned int delay = dev->d3_delay;
+	unsigned int delay = dev->d3hot_delay;
 
-	if (delay < pci_pm_d3_delay)
-		delay = pci_pm_d3_delay;
+	if (delay < pci_pm_d3hot_delay)
+		delay = pci_pm_d3hot_delay;
 
 	if (delay)
 		msleep(delay);
@@ -101,7 +98,19 @@ unsigned long pci_hotplug_mmio_pref_size = DEFAULT_HOTPLUG_MMIO_PREF_SIZE;
 #define DEFAULT_HOTPLUG_BUS_SIZE	1
 unsigned long pci_hotplug_bus_size = DEFAULT_HOTPLUG_BUS_SIZE;
 
+
+/* PCIe MPS/MRRS strategy; can be overridden by kernel command-line param */
+#ifdef CONFIG_PCIE_BUS_TUNE_OFF
+enum pcie_bus_config_types pcie_bus_config = PCIE_BUS_TUNE_OFF;
+#elif defined CONFIG_PCIE_BUS_SAFE
+enum pcie_bus_config_types pcie_bus_config = PCIE_BUS_SAFE;
+#elif defined CONFIG_PCIE_BUS_PERFORMANCE
+enum pcie_bus_config_types pcie_bus_config = PCIE_BUS_PERFORMANCE;
+#elif defined CONFIG_PCIE_BUS_PEER2PEER
+enum pcie_bus_config_types pcie_bus_config = PCIE_BUS_PEER2PEER;
+#else
 enum pcie_bus_config_types pcie_bus_config = PCIE_BUS_DEFAULT;
+#endif
 
 /*
  * The default CLS is used if arch didn't set CLS explicitly and not
@@ -876,6 +885,10 @@ static void pci_std_enable_acs(struct pci_dev *dev)
 	/* Upstream Forwarding */
 	ctrl |= (cap & PCI_ACS_UF);
 
+	/* Enable Translation Blocking for external devices */
+	if (dev->external_facing || dev->untrusted)
+		ctrl |= (cap & PCI_ACS_TB);
+
 	pci_write_config_word(dev, pos + PCI_ACS_CTRL, ctrl);
 }
 
@@ -1065,7 +1078,7 @@ static int pci_raw_set_power_state(struct pci_dev *dev, pci_power_t state)
 	if (state == PCI_D3hot || dev->current_state == PCI_D3hot)
 		pci_dev_d3_sleep(dev);
 	else if (state == PCI_D2 || dev->current_state == PCI_D2)
-		msleep(PCI_PM_D2_DELAY);
+		udelay(PCI_PM_D2_DELAY);
 
 	pci_read_config_word(dev, dev->pm_cap + PCI_PM_CTRL, &pmcsr);
 	dev->current_state = (pmcsr & PCI_PM_CTRL_STATE_MASK);
@@ -3013,7 +3026,7 @@ void pci_pm_init(struct pci_dev *dev)
 	}
 
 	dev->pm_cap = pm;
-	dev->d3_delay = PCI_PM_D3_WAIT;
+	dev->d3hot_delay = PCI_PM_D3HOT_WAIT;
 	dev->d3cold_delay = PCI_PM_D3COLD_WAIT;
 	dev->bridge_d3 = pci_bridge_d3_possible(dev);
 	dev->d3cold_allowed = true;
@@ -3038,7 +3051,7 @@ void pci_pm_init(struct pci_dev *dev)
 			 (pmc & PCI_PM_CAP_PME_D0) ? " D0" : "",
 			 (pmc & PCI_PM_CAP_PME_D1) ? " D1" : "",
 			 (pmc & PCI_PM_CAP_PME_D2) ? " D2" : "",
-			 (pmc & PCI_PM_CAP_PME_D3) ? " D3hot" : "",
+			 (pmc & PCI_PM_CAP_PME_D3hot) ? " D3hot" : "",
 			 (pmc & PCI_PM_CAP_PME_D3cold) ? " D3cold" : "");
 		dev->pme_support = pmc >> PCI_PM_CAP_PME_SHIFT;
 		dev->pme_poll = true;
@@ -3054,6 +3067,90 @@ void pci_pm_init(struct pci_dev *dev)
 	pci_read_config_word(dev, PCI_STATUS, &status);
 	if (status & PCI_STATUS_IMM_READY)
 		dev->imm_ready = 1;
+}
+
+/**
+ * pci_ltr_decode - Decode the latency to a value in ns
+ * @latency: latency register value according to PCIe r5.0, sec 6.18, 7.8.2
+ */
+static u64 pci_ltr_decode(u16 latency)
+{
+	u16 scale = (latency & PCI_LTR_SCALE_MASK) >> 10;
+	u16 value = latency & PCI_LTR_VALUE_MASK;
+
+	switch (scale) {
+	case 0: return value;
+	case 1: return value * 32;
+	case 2: return value * 1024;
+	case 3: return value * 32768;
+	case 4: return value * 1048576;
+	case 5: return value * 33554432;
+	}
+	return 0;
+}
+
+/**
+ * pci_ltr_encode - Encode the value in ns to a 16 bit register value
+ * @val: latency to encode in ns
+ *
+ * Returns @val encoded according to PCIe r5.0, sec 6.18, 7.8.2.
+ */
+static u16 pci_ltr_encode(u64 val)
+{
+	if (val <= 1UL * 0x3ff)        return (0 << 10) | ((val >>  0) & 0x3ff);
+	if (val <= 32UL * 0x3ff)       return (1 << 10) | ((val >>  5) & 0x3ff);
+	if (val <= 1024UL * 0x3ff)     return (2 << 10) | ((val >> 10) & 0x3ff);
+	if (val <= 32768UL * 0x3ff)    return (3 << 10) | ((val >> 15) & 0x3ff);
+	if (val <= 1048576UL * 0x3ff)  return (4 << 10) | ((val >> 20) & 0x3ff);
+	if (val <= 33554432UL * 0x3ff) return (5 << 10) | ((val >> 25) & 0x3ff);
+	return 0;
+}
+
+/**
+ * pci_ltr_init - Initialize Latency Tolerance Reporting capability of
+ * 		  given PCI device
+ * @dev: PCI device
+ */
+void pci_ltr_init(struct pci_dev *dev)
+{
+#ifdef CONFIG_PCIEASPM
+	int ltr;
+	struct pci_dev *bridge;
+	u64 snoop = 0, nosnoop = 0;
+	u16 snoop_enc, snoop_cur, nosnoop_enc, nosnoop_cur;
+
+	ltr = pci_find_ext_capability(dev, PCI_EXT_CAP_ID_LTR);
+	if (!ltr)
+		return;
+
+	bridge = pci_upstream_bridge(dev);
+	while (bridge) {
+		snoop += pci_ltr_decode(bridge->max_snoop_latency);
+		nosnoop += pci_ltr_decode(bridge->max_nosnoop_latency);
+		bridge = pci_upstream_bridge(bridge);
+	}
+
+	pci_dbg(dev, "calculated Max Snoop Latency %lluns Max No-Snoop Latency %lluns\n",
+		snoop, nosnoop);
+
+	snoop_enc = pci_ltr_encode(snoop);
+	pci_read_config_word(dev, ltr + PCI_LTR_MAX_SNOOP_LAT, &snoop_cur);
+	if (snoop_enc != snoop_cur) {
+		pci_info(dev, "setting Max Snoop Latency %lluns (was %lluns)\n",
+			 snoop, pci_ltr_decode(snoop_cur));
+		pci_write_config_word(dev, ltr + PCI_LTR_MAX_SNOOP_LAT,
+				      snoop_enc);
+	}
+
+	nosnoop_enc = pci_ltr_encode(nosnoop);
+	pci_read_config_word(dev, ltr + PCI_LTR_MAX_NOSNOOP_LAT, &nosnoop_cur);
+	if (nosnoop_enc != nosnoop_cur) {
+		pci_info(dev, "setting Max No-Snoop Latency %lluns (was %lluns)\n",
+			 nosnoop, pci_ltr_decode(nosnoop_cur));
+		pci_write_config_word(dev, ltr + PCI_LTR_MAX_NOSNOOP_LAT,
+				      nosnoop_enc);
+	}
+#endif
 }
 
 static unsigned long pci_ea_flags(struct pci_dev *dev, u8 prop)
@@ -4621,7 +4718,7 @@ static int pci_af_flr(struct pci_dev *dev, int probe)
  *
  * NOTE: This causes the caller to sleep for twice the device power transition
  * cooldown period, which for the D0->D3hot and D3hot->D0 transitions is 10 ms
- * by default (i.e. unless the @dev's d3_delay field has a different value).
+ * by default (i.e. unless the @dev's d3hot_delay field has a different value).
  * Moreover, only devices in D0 can be reset by this function.
  */
 static int pci_pm_reset(struct pci_dev *dev, int probe)
@@ -4701,9 +4798,7 @@ static bool pcie_wait_for_link_delay(struct pci_dev *pdev, bool active,
 	}
 	if (active && ret)
 		msleep(delay);
-	else if (ret != active)
-		pci_info(pdev, "Data Link Layer Link Active not %s in 1000 msec\n",
-			active ? "set" : "cleared");
+
 	return ret == active;
 }
 
@@ -4828,6 +4923,7 @@ void pci_bridge_wait_for_secondary_bus(struct pci_dev *dev)
 			delay);
 		if (!pcie_wait_for_link_delay(dev, true, delay)) {
 			/* Did not train, no need to wait any further */
+			pci_info(dev, "Data Link Layer Link Active not set in 1000 msec\n");
 			return;
 		}
 	}
@@ -4920,15 +5016,9 @@ static int pci_reset_hotplug_slot(struct hotplug_slot *hotplug, int probe)
 
 static int pci_dev_reset_slot_function(struct pci_dev *dev, int probe)
 {
-	struct pci_dev *pdev;
-
-	if (dev->subordinate || !dev->slot ||
+	if (dev->multifunction || dev->subordinate || !dev->slot ||
 	    dev->dev_flags & PCI_DEV_FLAGS_NO_BUS_RESET)
 		return -ENOTTY;
-
-	list_for_each_entry(pdev, &dev->bus->devices, bus_list)
-		if (pdev != dev && pdev->slot == dev->slot)
-			return -ENOTTY;
 
 	return pci_reset_hotplug_slot(dev->slot->hotplug, probe);
 }
@@ -6005,7 +6095,7 @@ int pci_set_vga_state(struct pci_dev *dev, bool decode,
 
 	if (flags & PCI_VGA_STATE_CHANGE_DECODES) {
 		pci_read_config_word(dev, PCI_COMMAND, &cmd);
-		if (decode == true)
+		if (decode)
 			cmd |= command_bits;
 		else
 			cmd &= ~command_bits;
@@ -6021,7 +6111,7 @@ int pci_set_vga_state(struct pci_dev *dev, bool decode,
 		if (bridge) {
 			pci_read_config_word(bridge, PCI_BRIDGE_CONTROL,
 					     &cmd);
-			if (decode == true)
+			if (decode)
 				cmd |= PCI_BRIDGE_CTL_VGA;
 			else
 				cmd &= ~PCI_BRIDGE_CTL_VGA;
@@ -6350,7 +6440,7 @@ static ssize_t resource_alignment_show(struct bus_type *bus, char *buf)
 
 	spin_lock(&resource_alignment_lock);
 	if (resource_alignment_param)
-		count = snprintf(buf, PAGE_SIZE, "%s", resource_alignment_param);
+		count = scnprintf(buf, PAGE_SIZE, "%s", resource_alignment_param);
 	spin_unlock(&resource_alignment_lock);
 
 	/*
