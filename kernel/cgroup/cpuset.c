@@ -1,5 +1,5 @@
 /*
- *  kernel/cpuset.c
+ *  kernel/cgroup/cpuset.c
  *
  *  Processor and Memory placement constraints for sets of tasks.
  *

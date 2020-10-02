@@ -348,7 +348,7 @@ static bool need_activate_page_drain(int cpu)
 	return pagevec_count(&per_cpu(lru_pvecs.activate_page, cpu)) != 0;
 }
 
-void activate_page(struct page *page)
+static void activate_page(struct page *page)
 {
 	page = compound_head(page);
 	if (PageLRU(page) && !PageActive(page) && !PageUnevictable(page)) {
@@ -368,7 +368,7 @@ static inline void activate_page_drain(int cpu)
 {
 }
 
-void activate_page(struct page *page)
+static void activate_page(struct page *page)
 {
 	pg_data_t *pgdat = page_pgdat(page);
 
@@ -481,9 +481,7 @@ EXPORT_SYMBOL(lru_cache_add);
  * @vma:   vma in which page is mapped for determining reclaimability
  *
  * Place @page on the inactive or unevictable LRU list, depending on its
- * evictability.  Note that if the page is not evictable, it goes
- * directly back onto it's zone's unevictable list, it does NOT use a
- * per cpu pagevec.
+ * evictability.
  */
 void lru_cache_add_inactive_or_unevictable(struct page *page,
 					 struct vm_area_struct *vma)
@@ -598,11 +596,9 @@ static void lru_lazyfree_fn(struct page *page, struct lruvec *lruvec,
 {
 	if (PageLRU(page) && PageAnon(page) && PageSwapBacked(page) &&
 	    !PageSwapCache(page) && !PageUnevictable(page)) {
-		bool active = PageActive(page);
 		int nr_pages = thp_nr_pages(page);
 
-		del_page_from_lru_list(page, lruvec,
-				       LRU_INACTIVE_ANON + active);
+		del_page_from_lru_list(page, lruvec, page_lru(page));
 		ClearPageActive(page);
 		ClearPageReferenced(page);
 		/*
@@ -891,6 +887,7 @@ void release_pages(struct page **pages, int nr)
 			locked_pgdat = NULL;
 		}
 
+		page = compound_head(page);
 		if (is_huge_zero_page(page))
 			continue;
 
@@ -902,7 +899,7 @@ void release_pages(struct page **pages, int nr)
 			}
 			/*
 			 * ZONE_DEVICE pages that return 'false' from
-			 * put_devmap_managed_page() do not require special
+			 * page_is_devmap_managed() do not require special
 			 * processing, and instead, expect a call to
 			 * put_page_testzero().
 			 */
@@ -912,7 +909,6 @@ void release_pages(struct page **pages, int nr)
 			}
 		}
 
-		page = compound_head(page);
 		if (!put_page_testzero(page))
 			continue;
 
@@ -943,8 +939,6 @@ void release_pages(struct page **pages, int nr)
 			del_page_from_lru_list(page, lruvec, page_off_lru(page));
 		}
 
-		/* Clear Active bit in case of parallel mark_page_accessed */
-		__ClearPageActive(page);
 		__ClearPageWaiters(page);
 
 		list_add(&page->lru, &pages_to_free);

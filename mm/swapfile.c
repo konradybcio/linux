@@ -324,14 +324,15 @@ static inline void cluster_set_null(struct swap_cluster_info *info)
 
 static inline bool cluster_is_huge(struct swap_cluster_info *info)
 {
-	if (IS_ENABLED(CONFIG_THP_SWAP))
+	if (IS_ENABLED(CONFIG_THP_SWAP) && info)
 		return info->flags & CLUSTER_FLAG_HUGE;
 	return false;
 }
 
 static inline void cluster_clear_huge(struct swap_cluster_info *info)
 {
-	info->flags &= ~CLUSTER_FLAG_HUGE;
+	if (IS_ENABLED(CONFIG_THP_SWAP) && info)
+		info->flags &= ~CLUSTER_FLAG_HUGE;
 }
 
 static inline struct swap_cluster_info *lock_cluster(struct swap_info_struct *si,
@@ -1184,7 +1185,6 @@ static struct swap_info_struct *_swap_info_get(swp_entry_t entry)
 
 bad_free:
 	pr_err("swap_info_get: %s%08lx\n", Unused_offset, entry.val);
-	goto out;
 out:
 	return NULL;
 }
@@ -1929,11 +1929,6 @@ static int unuse_pte(struct vm_area_struct *vma, pmd_t *pmd,
 		lru_cache_add_inactive_or_unevictable(page, vma);
 	}
 	swap_free(entry);
-	/*
-	 * Move the page to the active list so it is not
-	 * immediately swapped out again after swapon.
-	 */
-	activate_page(page);
 out:
 	pte_unmap_unlock(pte, ptl);
 	if (page != swapcache) {
@@ -2437,7 +2432,7 @@ static int setup_swap_extents(struct swap_info_struct *sis, sector_t *span)
 		if (ret >= 0)
 			sis->flags |= SWP_ACTIVATED;
 		if (!ret) {
-			sis->flags |= SWP_FS;
+			sis->flags |= SWP_FS_OPS;
 			ret = add_swap_extent(sis, 0, sis->max, 0);
 			*span = sis->pages;
 		}
@@ -3348,7 +3343,7 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 	error = inode_drain_writes(inode);
 	if (error) {
 		inode->i_flags &= ~S_SWAPFILE;
-		goto bad_swap_unlock_inode;
+		goto free_swap_address_space;
 	}
 
 	mutex_lock(&swapon_mutex);
@@ -3373,6 +3368,8 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 
 	error = 0;
 	goto out;
+free_swap_address_space:
+	exit_swap_address_space(p->type);
 bad_swap_unlock_inode:
 	inode_unlock(inode);
 bad_swap:
