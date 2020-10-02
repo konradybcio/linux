@@ -737,7 +737,7 @@ struct dentry *trace_create_file(const char *name,
 				 void *data,
 				 const struct file_operations *fops);
 
-struct dentry *tracing_init_dentry(void);
+int tracing_init_dentry(void);
 
 struct ring_buffer_event;
 
@@ -1125,6 +1125,8 @@ extern int ftrace_is_dead(void);
 int ftrace_create_function_files(struct trace_array *tr,
 				 struct dentry *parent);
 void ftrace_destroy_function_files(struct trace_array *tr);
+int ftrace_allocate_ftrace_ops(struct trace_array *tr);
+void ftrace_free_ftrace_ops(struct trace_array *tr);
 void ftrace_init_global_array_ops(struct trace_array *tr);
 void ftrace_init_array_ops(struct trace_array *tr, ftrace_func_t func);
 void ftrace_reset_array_ops(struct trace_array *tr);
@@ -1146,6 +1148,11 @@ ftrace_create_function_files(struct trace_array *tr,
 {
 	return 0;
 }
+static inline int ftrace_allocate_ftrace_ops(struct trace_array *tr)
+{
+	return 0;
+}
+static inline void ftrace_free_ftrace_ops(struct trace_array *tr) { }
 static inline void ftrace_destroy_function_files(struct trace_array *tr) { }
 static inline __init void
 ftrace_init_global_array_ops(struct trace_array *tr) { }
@@ -1651,6 +1658,7 @@ extern void trace_event_enable_tgid_record(bool enable);
 extern int event_trace_init(void);
 extern int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr);
 extern int event_trace_del_tracer(struct trace_array *tr);
+extern void __trace_early_add_events(struct trace_array *tr);
 
 extern struct trace_event_file *__find_event_file(struct trace_array *tr,
 						  const char *system,
