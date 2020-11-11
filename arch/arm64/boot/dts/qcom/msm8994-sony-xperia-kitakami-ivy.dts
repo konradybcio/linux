@@ -14,3 +14,16 @@
 	qcom,msm-id = <0xcf 0x00>, <0xcf 0x10000>, <0xcf 0x20000>;
 	qcom,board-id = <0x08 0x00>, <0x10008 0x00>;
 };
+
+&pm8994_l3 {
+	regulator-min-microvolt = <1000000>;
+	regulator-max-microvolt = <1000000>;
+};
+
+&pm8994_l17 {
+	regulator-min-microvolt = <2700000>;
+	regulator-max-microvolt = <2700000>;
+};
+
+/delete-node/ &pm8994_l19;
+/delete-node/ &pm8994_l32;

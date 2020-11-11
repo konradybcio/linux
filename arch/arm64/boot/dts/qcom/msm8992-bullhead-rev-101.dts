@@ -6,6 +6,8 @@
 /dts-v1/;
 
 #include "msm8992.dtsi"
+#include "pm8994.dtsi"
+#include "pmi8994.dtsi"
 
 / {
 	model = "LG Nexus 5X";
@@ -47,29 +49,34 @@
 	pm8994-regulators {
 		compatible = "qcom,rpm-pm8994-regulators";
 
-		vdd_l1-supply = <&pm8994_s1>;
-		vdd_l2_26_28-supply = <&pm8994_s3>;
-		vdd_l3_11-supply = <&pm8994_s3>;
-		vdd_l4_27_31-supply = <&pm8994_s3>;
-		vdd_l5_7-supply = <&pm8994_s3>;
-		vdd_l6_12_32-supply = <&pm8994_s5>;
-		vdd_l8_16_30-supply = <&vreg_vph_pwr>;
-		vdd_l9_10_18_22-supply = <&vreg_vph_pwr>;
-		vdd_l13_19_23_24-supply = <&vreg_vph_pwr>;
-		vdd_l14_15-supply = <&pm8994_s5>;
-		vdd_l17_29-supply = <&vreg_vph_pwr>;
-		vdd_l20_21-supply = <&vreg_vph_pwr>;
-		vdd_l25-supply = <&pm8994_s5>;
-		vdd_lvs1_2 = <&pm8994_s4>;
+		vdd_s1-supply = <&vph_pwr>;
+		vdd_s2-supply = <&vph_pwr>;
+		vdd_s3-supply = <&vph_pwr>;
+		vdd_s4-supply = <&vph_pwr>;
+		vdd_s5-supply = <&vph_pwr>;
+		vdd_s6-supply = <&vph_pwr>;
+		vdd_s7-supply = <&vph_pwr>;
+		vdd_s8-supply = <&vph_pwr>;
+		vdd_s9-supply = <&vph_pwr>;
+		vdd_s10-supply = <&vph_pwr>;
+		vdd_s11-supply = <&vph_pwr>;
+		vdd_s12-supply = <&vph_pwr>;
+		vdd_l1-supply = <&pmi8994_s1>;
+		vdd_l2_l26_l28-supply = <&pm8994_s3>;
+		vdd_l3_l11-supply = <&pm8994_s3>;
+		vdd_l4_l27_l31-supply = <&pm8994_s3>;
+		vdd_l5_l7-supply = <&pm8994_s5>;
+		vdd_l6_l12_l32-supply = <&pm8994_s5>;
+		vdd_l8_l16_l30-supply = <&vph_pwr>;
+		vdd_l9_l10_l18_l22-supply = <&pmi8994_bby>;
+		vdd_l13_l19_l23_l24-supply = <&pmi8994_bby>;
+		vdd_l14_l15-supply = <&pm8994_s5>;
+		vdd_l17_l29-supply = <&pmi8994_bby>;
+		vdd_l20_l21-supply = <&pmi8994_bby>;
+		vdd_l25-supply = <&pm8994_s3>;
+		vdd_lvs1_lvs2-supply = <&pm8994_s4>;
 
-		pm8994_s1: s1 {
-			regulator-min-microvolt = <800000>;
-			regulator-max-microvolt = <800000>;
-		};
-
-		pm8994_s2: s2 {
-			/* TODO */
-		};
+		/* S1, S2, S6 and S12 are managed by RPMPD */
 
 		pm8994_s3: s3 {
 			regulator-min-microvolt = <1300000>;
@@ -93,6 +100,8 @@
 			regulator-max-microvolt = <1000000>;
 		};
 
+		/* S8, S9, S10 and S11 - SPMI-managed VDD_APC */
+
 		pm8994_l1: l1 {
 			regulator-min-microvolt = <1000000>;
 			regulator-max-microvolt = <1000000>;
@@ -113,18 +122,14 @@
 			regulator-max-microvolt = <1225000>;
 		};
 
-		pm8994_l5: l5 {
-			/* TODO */
-		};
+		/* L5 is inaccessible from RPM */
 
 		pm8994_l6: l6 {
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1800000>;
 		};
 
-		pm8994_l7: l7 {
-			/* TODO */
-		};
+		/* L7 is inaccessible from RPM */
 
 		pm8994_l8: l8 {
 			regulator-min-microvolt = <1800000>;
@@ -265,6 +270,19 @@
 			qcom,init-voltage = <1800000>;
 			*/
 		};
+	};
+
+	pmi8994_regulators: pmi8994-regulators {
+		compatible = "qcom,rpm-pmi8994-regulators";
+
+		vdd_s1-supply = <&vph_pwr>;
+		vdd_bst_byp-supply = <&vph_pwr>;
+
+		pmi8994_s1: s1 {};
+
+		/* S2 & S3 - VDD_GFX */
+
+		pmi8994_bby: boost-bypass {};
 	};
 };
 
