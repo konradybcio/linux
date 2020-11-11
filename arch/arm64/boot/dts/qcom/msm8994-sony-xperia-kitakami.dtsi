@@ -340,6 +340,8 @@
 			regulator-min-microvolt = <2950000>;
 			regulator-max-microvolt = <2950000>;
 			regulator-always-on;
+			regulator-allow-set-load;
+			regulator-system-load = <800000>;
 		};
 
 		pm8994_l22: l22 {
@@ -440,6 +442,13 @@
 	 * vmmc-supply = <&pm8994_l20>;
 	 * vqmmc-supply = <&pm8994_s4>;
 	 */
+};
+
+&sdhc2 {
+	status = "okay";
+
+	vmmc-supply = <&pm8994_l21>;
+	vqmmc-supply = <&pm8994_l13>;
 };
 
 &tlmm {
