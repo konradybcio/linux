@@ -188,6 +188,25 @@ DEFINE_EVENT(bch_fs, journal_entry_full,
 	TP_ARGS(c)
 );
 
+TRACE_EVENT(journal_entry_close,
+	TP_PROTO(struct bch_fs *c, unsigned bytes),
+	TP_ARGS(c, bytes),
+
+	TP_STRUCT__entry(
+		__field(dev_t,		dev			)
+		__field(u32,		bytes			)
+	),
+
+	TP_fast_assign(
+		__entry->dev			= c->dev;
+		__entry->bytes			= bytes;
+	),
+
+	TP_printk("%d,%d entry bytes %u",
+		  MAJOR(__entry->dev), MINOR(__entry->dev),
+		  __entry->bytes)
+);
+
 DEFINE_EVENT(bio, journal_write,
 	TP_PROTO(struct bio *bio),
 	TP_ARGS(bio)
@@ -1252,22 +1271,37 @@ TRACE_EVENT(trans_restart_key_cache_key_realloced,
 TRACE_EVENT(path_downgrade,
 	TP_PROTO(struct btree_trans *trans,
 		 unsigned long caller_ip,
-		 struct btree_path *path),
-	TP_ARGS(trans, caller_ip, path),
+		 struct btree_path *path,
+		 unsigned old_locks_want),
+	TP_ARGS(trans, caller_ip, path, old_locks_want),
 
 	TP_STRUCT__entry(
 		__array(char,			trans_fn, 32	)
 		__field(unsigned long,		caller_ip	)
+		__field(unsigned,		old_locks_want	)
+		__field(unsigned,		new_locks_want	)
+		__field(unsigned,		btree		)
+		TRACE_BPOS_entries(pos)
 	),
 
 	TP_fast_assign(
 		strscpy(__entry->trans_fn, trans->fn, sizeof(__entry->trans_fn));
 		__entry->caller_ip		= caller_ip;
+		__entry->old_locks_want		= old_locks_want;
+		__entry->new_locks_want		= path->locks_want;
+		__entry->btree			= path->btree_id;
+		TRACE_BPOS_assign(pos, path->pos);
 	),
 
-	TP_printk("%s %pS",
+	TP_printk("%s %pS locks_want %u -> %u %s %llu:%llu:%u",
 		  __entry->trans_fn,
-		  (void *) __entry->caller_ip)
+		  (void *) __entry->caller_ip,
+		  __entry->old_locks_want,
+		  __entry->new_locks_want,
+		  bch2_btree_id_str(__entry->btree),
+		  __entry->pos_inode,
+		  __entry->pos_offset,
+		  __entry->pos_snapshot)
 );
 
 DEFINE_EVENT(transaction_event,	trans_restart_write_buffer_flush,
@@ -1298,21 +1332,38 @@ TRACE_EVENT(write_buffer_flush,
 		  __entry->nr, __entry->size, __entry->skipped, __entry->fast)
 );
 
-TRACE_EVENT(write_buffer_flush_slowpath,
-	TP_PROTO(struct btree_trans *trans, size_t nr, size_t size),
-	TP_ARGS(trans, nr, size),
+TRACE_EVENT(write_buffer_flush_sync,
+	TP_PROTO(struct btree_trans *trans, unsigned long caller_ip),
+	TP_ARGS(trans, caller_ip),
 
 	TP_STRUCT__entry(
-		__field(size_t,		nr		)
-		__field(size_t,		size		)
+		__array(char,			trans_fn, 32	)
+		__field(unsigned long,		caller_ip	)
 	),
 
 	TP_fast_assign(
-		__entry->nr	= nr;
-		__entry->size	= size;
+		strscpy(__entry->trans_fn, trans->fn, sizeof(__entry->trans_fn));
+		__entry->caller_ip		= caller_ip;
 	),
 
-	TP_printk("%zu/%zu", __entry->nr, __entry->size)
+	TP_printk("%s %pS", __entry->trans_fn, (void *) __entry->caller_ip)
+);
+
+TRACE_EVENT(write_buffer_flush_slowpath,
+	TP_PROTO(struct btree_trans *trans, size_t slowpath, size_t total),
+	TP_ARGS(trans, slowpath, total),
+
+	TP_STRUCT__entry(
+		__field(size_t,		slowpath	)
+		__field(size_t,		total		)
+	),
+
+	TP_fast_assign(
+		__entry->slowpath	= slowpath;
+		__entry->total		= total;
+	),
+
+	TP_printk("%zu/%zu", __entry->slowpath, __entry->total)
 );
 
 #endif /* _TRACE_BCACHEFS_H */

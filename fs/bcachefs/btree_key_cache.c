@@ -645,22 +645,27 @@ static int btree_key_cache_flush_pos(struct btree_trans *trans,
 	if (journal_seq && ck->journal.seq != journal_seq)
 		goto out;
 
+	trans->journal_res.seq = ck->journal.seq;
+
 	/*
-	 * Since journal reclaim depends on us making progress here, and the
-	 * allocator/copygc depend on journal reclaim making progress, we need
-	 * to be using alloc reserves:
+	 * If we're at the end of the journal, we really want to free up space
+	 * in the journal right away - we don't want to pin that old journal
+	 * sequence number with a new btree node write, we want to re-journal
+	 * the update
 	 */
+	if (ck->journal.seq == journal_last_seq(j))
+		commit_flags |= BCH_WATERMARK_reclaim;
+	else
+		commit_flags |= BCH_TRANS_COMMIT_no_journal_res;
+
 	ret   = bch2_btree_iter_traverse(&b_iter) ?:
 		bch2_trans_update(trans, &b_iter, ck->k,
 				  BTREE_UPDATE_KEY_CACHE_RECLAIM|
 				  BTREE_UPDATE_INTERNAL_SNAPSHOT_NODE|
 				  BTREE_TRIGGER_NORUN) ?:
 		bch2_trans_commit(trans, NULL, NULL,
-				  BTREE_INSERT_NOCHECK_RW|
-				  BTREE_INSERT_NOFAIL|
-				  (ck->journal.seq == journal_last_seq(j)
-				   ? BCH_WATERMARK_reclaim
-				   : 0)|
+				  BCH_TRANS_COMMIT_no_check_rw|
+				  BCH_TRANS_COMMIT_no_enospc|
 				  commit_flags);
 
 	bch2_fs_fatal_err_on(ret &&
@@ -734,7 +739,7 @@ int bch2_btree_key_cache_journal_flush(struct journal *j,
 
 	ret = commit_do(trans, NULL, NULL, 0,
 		btree_key_cache_flush_pos(trans, key, seq,
-				BTREE_INSERT_JOURNAL_RECLAIM, false));
+				BCH_TRANS_COMMIT_journal_reclaim, false));
 unlock:
 	srcu_read_unlock(&c->btree_trans_barrier, srcu_idx);
 

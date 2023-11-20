@@ -263,7 +263,7 @@ static int bch2_extent_drop_ptrs(struct btree_trans *trans,
 
 	return bch2_trans_relock(trans) ?:
 		bch2_trans_update(trans, iter, n, BTREE_UPDATE_INTERNAL_SNAPSHOT_NODE) ?:
-		bch2_trans_commit(trans, NULL, NULL, BTREE_INSERT_NOFAIL);
+		bch2_trans_commit(trans, NULL, NULL, BCH_TRANS_COMMIT_no_enospc);
 }
 
 int bch2_move_extent(struct moving_context *ctxt,
@@ -721,11 +721,10 @@ int __bch2_evacuate_bucket(struct moving_context *ctxt,
 	bucket_size = bch_dev_bkey_exists(c, bucket.inode)->mi.bucket_size;
 	fragmentation = a->fragmentation_lru;
 
-	ret = bch2_btree_write_buffer_flush(trans);
-	if (ret) {
-		bch_err_msg(c, ret, "flushing btree write buffer");
+	ret = bch2_btree_write_buffer_tryflush(trans);
+	bch_err_msg(c, ret, "flushing btree write buffer");
+	if (ret)
 		goto err;
-	}
 
 	while (!(ret = bch2_move_ratelimit(ctxt))) {
 		bch2_trans_begin(trans);

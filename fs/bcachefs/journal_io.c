@@ -1590,7 +1590,11 @@ static void journal_write_done(struct closure *cl)
 	} while ((v = atomic64_cmpxchg(&j->reservations.counter,
 				       old.v, new.v)) != old.v);
 
+	bch2_journal_reclaim_fast(j);
 	bch2_journal_space_available(j);
+
+	track_event_change(&c->times[BCH_TIME_blocked_journal_max_in_flight],
+			   &j->max_in_flight_start, false);
 
 	closure_wake_up(&w->wait);
 	journal_wake(j);
@@ -1877,6 +1881,8 @@ void bch2_journal_write(struct closure *cl)
 	ret = bch2_journal_write_prep(j, w);
 	if (ret)
 		goto err;
+
+	j->entry_bytes_written += vstruct_bytes(w->data);
 
 	while (1) {
 		spin_lock(&j->lock);
