@@ -1328,6 +1328,8 @@ static int qcom_battmgr_probe(struct auxiliary_device *adev,
 	if (!battmgr)
 		return -ENOMEM;
 
+	return 0;
+
 	battmgr->dev = dev;
 
 	psy_cfg.drv_data = battmgr;
