@@ -1578,4 +1578,13 @@ void unlink_file_vma_batch_init(struct unlink_vma_file_batch *);
 void unlink_file_vma_batch_add(struct unlink_vma_file_batch *, struct vm_area_struct *);
 void unlink_file_vma_batch_final(struct unlink_vma_file_batch *);
 
+#ifdef CONFIG_UNACCEPTED_MEMORY
+bool try_to_accept_memory(struct zone *zone, unsigned int order);
+#else
+static inline bool try_to_accept_memory(struct zone *zone, unsigned int order)
+{
+	return false;
+}
+#endif /* CONFIG_UNACCEPTED_MEMORY */
+
 #endif	/* __MM_INTERNAL_H */
