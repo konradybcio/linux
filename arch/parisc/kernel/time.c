@@ -44,6 +44,9 @@ int time_keeper_id __read_mostly;	/* CPU used for timekeeping. */
 
 static unsigned long clocktick __ro_after_init;	/* timer cycles per tick */
 
+#define MONARCH_CLOCKTICK_FACTOR	10
+static int clock_use_monarch_cr16;
+
 /*
  * We keep time on PA-RISC Linux by using the Interval Timer which is
  * a pair of registers; one is read-only and one is write-only; both
@@ -60,6 +63,16 @@ static unsigned long clocktick __ro_after_init;	/* timer cycles per tick */
  * is programmed with the intended time of the next tick.  We can be
  * held off for an arbitrarily long period of time by interrupts being
  * disabled, so we may miss one or more ticks.
+ *
+ * Note that on SMP machines the CR16 clocks are not syncronized between
+ * the CPUs. So, on such machines CR16 can not be used as high-res clock
+ * input for the monotonic clock_gettime64() syscall, which is why
+ * clock_gettime64() delivers poor resolution on SMP when configured with
+ * HZ=100 or HZ=250.  To work around this issue, let the CR16 timer
+ * interrupt trigger MONARCH_CLOCKTICK_FACTOR times more often, and read the
+ * monarch CR16 value everytime when interrupted. This CR16 value of the
+ * monarch CPU will then be used instead of the local CPU cr16 counter to
+ * get higher resolution than just using the jiffie-based timer.
  */
 irqreturn_t __irq_entry timer_interrupt(int irq, void *dev_id)
 {
@@ -68,9 +81,20 @@ irqreturn_t __irq_entry timer_interrupt(int irq, void *dev_id)
 	unsigned long ticks_elapsed = 0;
 	unsigned int cpu = smp_processor_id();
 	struct cpuinfo_parisc *cpuinfo = &per_cpu(cpu_data, cpu);
+	int increase_monarch_tickrate = 0;
+	static int monarch_tickrate_counter;
 
 	/* gcc can optimize for "read-only" case with a local clocktick */
 	unsigned long cpt = clocktick;
+
+	/* let main clock tick faster if necessary */
+	if (IS_ENABLED(CONFIG_SMP) &&
+	    (IS_ENABLED(CONFIG_HZ_100) || IS_ENABLED(CONFIG_HZ_250)) &&
+	    clock_use_monarch_cr16 && (cpu == time_keeper_id)) {
+		increase_monarch_tickrate = 1;
+		cpt /= MONARCH_CLOCKTICK_FACTOR;
+		monarch_tickrate_counter++;
+	}
 
 	/* Initialize next_tick to the old expected tick time. */
 	next_tick = cpuinfo->it_value;
@@ -88,7 +112,12 @@ irqreturn_t __irq_entry timer_interrupt(int irq, void *dev_id)
 	/* Go do system house keeping. */
 	if (IS_ENABLED(CONFIG_SMP) && (cpu != time_keeper_id))
 		ticks_elapsed = 0;
-	legacy_timer_tick(ticks_elapsed);
+	if (!increase_monarch_tickrate || (increase_monarch_tickrate
+		&& monarch_tickrate_counter == MONARCH_CLOCKTICK_FACTOR)) {
+		legacy_timer_tick(ticks_elapsed);
+		if (increase_monarch_tickrate)
+			monarch_tickrate_counter = 0;
+	}
 
 	/* Skip clockticks on purpose if we know we would miss those.
 	 * The new CR16 must be "later" than current CR16 otherwise
@@ -141,7 +170,14 @@ EXPORT_SYMBOL(profile_pc);
 
 static u64 notrace read_cr16(struct clocksource *cs)
 {
-	return get_cycles();
+	struct cpuinfo_parisc *cpuinfo;
+
+	/* fast path */
+	if (!clock_use_monarch_cr16)
+		return get_cycles();
+
+	cpuinfo = &per_cpu(cpu_data, time_keeper_id);
+	return cpuinfo->it_value;
 }
 
 static struct clocksource clocksource_cr16 = {
@@ -254,9 +290,11 @@ static int __init init_cr16_clocksource(void)
 	 * The cr16 interval timers are not synchronized across CPUs.
 	 */
 	if (num_online_cpus() > 1 && !running_on_qemu) {
-		clocksource_cr16.name = "cr16_unstable";
-		clocksource_cr16.flags = CLOCK_SOURCE_UNSTABLE;
-		clocksource_cr16.rating = 0;
+		clock_use_monarch_cr16 = 1;
+		/* keep CONFIG_HZ, but let timer fire more often */
+		if (IS_ENABLED(CONFIG_HZ_100) || IS_ENABLED(CONFIG_HZ_250)) {
+			clocksource_cr16.name = "cr16_monarch";
+		}
 	}
 
 	/* register at clocksource framework */
