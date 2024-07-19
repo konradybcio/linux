@@ -319,6 +319,7 @@ static bool __must_check abort_on_error(int result, struct repair_completion *re
 /**
  * drain_slab_depot() - Flush out all dirty refcounts blocks now that they have been rebuilt or
  *                      recovered.
+ * @completion: The repair completion.
  */
 static void drain_slab_depot(struct vdo_completion *completion)
 {
@@ -654,9 +655,6 @@ static void rebuild_reference_counts(struct vdo_completion *completion)
 	vdo_traverse_forest(vdo->block_map, process_entry, completion);
 }
 
-/**
- * increment_recovery_point() - Move the given recovery point forward by one entry.
- */
 static void increment_recovery_point(struct recovery_point *point)
 {
 	if (++point->entry_count < RECOVERY_JOURNAL_ENTRIES_PER_SECTOR)
@@ -953,6 +951,7 @@ static void abort_block_map_recovery(struct repair_completion *repair, int resul
 /**
  * find_entry_starting_next_page() - Find the first journal entry after a given entry which is not
  *                                   on the same block map page.
+ * @repair: The repair completion.
  * @current_entry: The entry to search from.
  * @needs_sort: Whether sorting is needed to proceed.
  *
@@ -1219,6 +1218,7 @@ static bool __must_check is_exact_recovery_journal_block(const struct recovery_j
 
 /**
  * find_recovery_journal_head_and_tail() - Find the tail and head of the journal.
+ * @repair: The repair completion.
  *
  * Return: True if there were valid journal blocks.
  */
@@ -1447,6 +1447,7 @@ static int validate_heads(struct repair_completion *repair)
 
 /**
  * extract_new_mappings() - Find all valid new mappings to be applied to the block map.
+ * @repair: The repair completion.
  *
  * The mappings are extracted from the journal and stored in a sortable array so that all of the
  * mappings to be applied to a given block map page can be done in a single page fetch.
@@ -1501,6 +1502,7 @@ static int extract_new_mappings(struct repair_completion *repair)
 /**
  * compute_usages() - Compute the lbns in use and block map data blocks counts from the tail of
  *                    the journal.
+ * @repair: The repair completion.
  */
 static noinline int compute_usages(struct repair_completion *repair)
 {
