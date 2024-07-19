@@ -110,26 +110,6 @@
 	};
 
 	reserved-memory {
-		reserved@83f00000 {
-			reg = <0x0 0x83f00000 0x0 0x100000>;
-			no-map;
-		};
-
-		reserved@d6c8e000 {
-			reg = <0x0 0xd6c8e000 0x0 0x10000>;
-			no-map;
-		};
-
-		reserved@e4700000 {
-			reg = <0x0 0xe4700000 0x0 0x100000>;
-			no-map;
-		};
-
-		reserved@e4800000 {
-			reg = <0x0 0xe4800000 0x0 0x21c0000>;
-			no-map;
-		};
-
 		linux,cma {
 			compatible = "shared-dma-pool";
 			size = <0x0 0x8000000>;
