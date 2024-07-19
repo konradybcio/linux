@@ -151,7 +151,6 @@ static void bchfs_read(struct btree_trans *trans,
 	struct bkey_buf sk;
 	int flags = BCH_READ_RETRY_IF_STALE|
 		BCH_READ_MAY_PROMOTE;
-	u32 snapshot;
 	int ret = 0;
 
 	rbio->c = c;
@@ -159,29 +158,23 @@ static void bchfs_read(struct btree_trans *trans,
 	rbio->subvol = inum.subvol;
 
 	bch2_bkey_buf_init(&sk);
-retry:
 	bch2_trans_begin(trans);
-	iter = (struct btree_iter) { NULL };
-
-	ret = bch2_subvolume_get_snapshot(trans, inum.subvol, &snapshot);
-	if (ret)
-		goto err;
-
 	bch2_trans_iter_init(trans, &iter, BTREE_ID_extents,
-			     SPOS(inum.inum, rbio->bio.bi_iter.bi_sector, snapshot),
+			     POS(inum.inum, rbio->bio.bi_iter.bi_sector),
 			     BTREE_ITER_slots);
 	while (1) {
 		struct bkey_s_c k;
 		unsigned bytes, sectors, offset_into_extent;
 		enum btree_id data_btree = BTREE_ID_extents;
 
-		/*
-		 * read_extent -> io_time_reset may cause a transaction restart
-		 * without returning an error, we need to check for that here:
-		 */
-		ret = bch2_trans_relock(trans);
+		bch2_trans_begin(trans);
+
+		u32 snapshot;
+		ret = bch2_subvolume_get_snapshot(trans, inum.subvol, &snapshot);
 		if (ret)
-			break;
+			goto err;
+
+		bch2_btree_iter_set_snapshot(&iter, snapshot);
 
 		bch2_btree_iter_set_pos(&iter,
 				POS(inum.inum, rbio->bio.bi_iter.bi_sector));
@@ -189,7 +182,7 @@ retry:
 		k = bch2_btree_iter_peek_slot(&iter);
 		ret = bkey_err(k);
 		if (ret)
-			break;
+			goto err;
 
 		offset_into_extent = iter.pos.offset -
 			bkey_start_offset(k.k);
@@ -200,7 +193,7 @@ retry:
 		ret = bch2_read_indirect_extent(trans, &data_btree,
 					&offset_into_extent, &sk);
 		if (ret)
-			break;
+			goto err;
 
 		k = bkey_i_to_s_c(sk.k);
 
@@ -210,7 +203,7 @@ retry:
 			ret = readpage_bio_extend(trans, readpages_iter, &rbio->bio, sectors,
 						  extent_partial_reads_expensive(k));
 			if (ret)
-				break;
+				goto err;
 		}
 
 		bytes = min(sectors, bio_sectors(&rbio->bio)) << 9;
@@ -229,16 +222,12 @@ retry:
 
 		swap(rbio->bio.bi_iter.bi_size, bytes);
 		bio_advance(&rbio->bio, bytes);
-
-		ret = btree_trans_too_many_iters(trans);
-		if (ret)
+err:
+		if (ret &&
+		    !bch2_err_matches(ret, BCH_ERR_transaction_restart))
 			break;
 	}
-err:
 	bch2_trans_iter_exit(trans, &iter);
-
-	if (bch2_err_matches(ret, BCH_ERR_transaction_restart))
-		goto retry;
 
 	if (ret) {
 		bch_err_inum_offset_ratelimited(c,
@@ -678,8 +667,8 @@ int bch2_write_begin(struct file *file, struct address_space *mapping,
 	bch2_pagecache_add_get(inode);
 
 	folio = __filemap_get_folio(mapping, pos >> PAGE_SHIFT,
-				FGP_LOCK|FGP_WRITE|FGP_CREAT|FGP_STABLE,
-				mapping_gfp_mask(mapping));
+				    FGP_WRITEBEGIN | fgf_set_order(len),
+				    mapping_gfp_mask(mapping));
 	if (IS_ERR_OR_NULL(folio))
 		goto err_unlock;
 
@@ -820,9 +809,8 @@ static int __bch2_buffered_write(struct bch_inode_info *inode,
 	darray_init(&fs);
 
 	ret = bch2_filemap_get_contig_folios_d(mapping, pos, end,
-				   FGP_LOCK|FGP_WRITE|FGP_STABLE|FGP_CREAT,
-				   mapping_gfp_mask(mapping),
-				   &fs);
+					       FGP_WRITEBEGIN | fgf_set_order(len),
+					       mapping_gfp_mask(mapping), &fs);
 	if (ret)
 		goto out;
 
@@ -864,24 +852,26 @@ static int __bch2_buffered_write(struct bch_inode_info *inode,
 	f_pos = pos;
 	f_offset = pos - folio_pos(darray_first(fs));
 	darray_for_each(fs, fi) {
+		ssize_t f_reserved;
+
 		f = *fi;
 		f_len = min(end, folio_end_pos(f)) - f_pos;
+		f_reserved = bch2_folio_reservation_get_partial(c, inode, f, &res, f_offset, f_len);
 
-		/*
-		 * XXX: per POSIX and fstests generic/275, on -ENOSPC we're
-		 * supposed to write as much as we have disk space for.
-		 *
-		 * On failure here we should still write out a partial page if
-		 * we aren't completely out of disk space - we don't do that
-		 * yet:
-		 */
-		ret = bch2_folio_reservation_get(c, inode, f, &res, f_offset, f_len);
-		if (unlikely(ret)) {
-			folios_trunc(&fs, fi);
-			if (!fs.nr)
-				goto out;
+		if (unlikely(f_reserved != f_len)) {
+			if (f_reserved < 0) {
+				if (f == darray_first(fs)) {
+					ret = f_reserved;
+					goto out;
+				}
 
-			end = min(end, folio_end_pos(darray_last(fs)));
+				folios_trunc(&fs, fi);
+				end = min(end, folio_end_pos(darray_last(fs)));
+			} else {
+				folios_trunc(&fs, fi + 1);
+				end = f_pos + f_reserved;
+			}
+
 			break;
 		}
 
